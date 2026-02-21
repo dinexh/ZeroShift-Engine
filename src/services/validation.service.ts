@@ -42,7 +42,7 @@ export class ValidationService {
         const response = await axios.get(healthUrl, { timeout: healthTimeoutMs });
         const latency = Date.now() - start;
 
-        if (response.status === 200) {
+        if (response.status >= 200 && response.status < 300) {
           if (latency > maxLatencyMs) {
             const msg = `Latency ${latency}ms exceeded threshold of ${maxLatencyMs}ms`;
             logger.warn({ healthUrl, attempt, latency }, msg);
