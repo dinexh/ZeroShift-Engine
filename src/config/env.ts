@@ -26,6 +26,6 @@ export const config = {
     healthTimeoutMs: 5000,
     retryDelayMs: 2000,
     maxLatencyMs: 2000,
-    maxRetries: 5,
+    maxRetries: 15, // 30 seconds total — accommodates slow-booting apps
   },
 } as const;
