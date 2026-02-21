@@ -3,14 +3,16 @@ import { config } from "./config/env";
 import { logger } from "./utils/logger";
 import prisma from "./prisma/client";
 import { ReconciliationService } from "./services/reconciliation.service";
+import { ContainerMonitorService } from "./services/container-monitor.service";
 
 async function start(): Promise<void> {
   const app = await buildApp();
+  const monitor = new ContainerMonitorService();
 
   // Graceful shutdown
-  
   const shutdown = async (signal: string): Promise<void> => {
     logger.info({ signal }, "Shutting down");
+    monitor.stop();
     await app.close();
     await prisma.$disconnect();
     process.exit(0);
@@ -36,6 +38,8 @@ async function start(): Promise<void> {
       },
       "ZeroShift Engine is running"
     );
+
+    monitor.start();
   } catch (err) {
     logger.fatal({ err }, "Failed to start server");
     await prisma.$disconnect();
