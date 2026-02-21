@@ -85,6 +85,8 @@ npx prisma migrate dev --name init
 npm run dev
 ```
 
+> **Note:** `pino-pretty` is required for dev logging. It is included in dependencies as of v1.0.1.
+
 ## Docker
 
 ```bash
