@@ -4,6 +4,7 @@ import { parseProjectEnv } from "../utils/env";
 import { DeploymentRepository } from "../repositories/deployment.repository";
 import { ProjectRepository } from "../repositories/project.repository";
 import { buildImage, runContainer, stopContainer, removeContainer } from "../utils/docker";
+import { ensureDockerfile } from "../utils/dockerfile";
 import { logger } from "../utils/logger";
 import { ConflictError, DeploymentError, NotFoundError } from "../utils/errors";
 import { ValidationService } from "./validation.service";
@@ -71,6 +72,7 @@ export class DeploymentService {
       // ── Step 1: Prepare source ─────────────────────────────────────────────
       logger.info({ projectId, step: 1 }, "Preparing source code");
       await this.git.prepareSource(project);
+      await ensureDockerfile(this.git.projectPath(project), project.appPort);
 
       // ── Step 2: Determine color and port ───────────────────────────────────
       const activeDeployment = await this.repo.findActiveForProject(projectId);
