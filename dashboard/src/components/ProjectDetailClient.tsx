@@ -59,6 +59,8 @@ export function ProjectDetailClient() {
   const [logsUpdated, setLogsUpdated] = useState<Date | null>(null);
   const [logsLoading, setLogsLoading] = useState(false);
   const [deploying, setDeploying] = useState(false);
+  const [deployStep, setDeployStep] = useState(-1); // -1 = not visible; 0-4 = current step
+  const [deployFailed, setDeployFailed] = useState(false);
   const [rollingBack, setRollingBack] = useState(false);
   const [rollbackOpen, setRollbackOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -175,15 +177,34 @@ export function ProjectDetailClient() {
   // ── Actions ────────────────────────────────────────────────────────────────
   async function handleDeploy() {
     setDeploying(true);
+    setDeployStep(0);
+    setDeployFailed(false);
+
+    // Simulate step advancement while waiting for the API call
+    // Steps: 0=Pulling, 1=Building, 2=Starting, 3=Health check, 4=Traffic switch
+    const t1 = setTimeout(() => setDeployStep(1), 4_000);   // →Building
+    const t2 = setTimeout(() => setDeployStep(2), 20_000);  // →Starting
+    const t3 = setTimeout(() => setDeployStep(3), 24_000);  // →Health check
+
     const tid = toast.loading("Deploying...");
     try {
       const result = await api.deployments.deploy(projectId);
+      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
+      setDeployStep(4); // Traffic switch
+      setTimeout(() => setDeployStep(5), 900); // mark all done
       toast.success(result.message, { id: tid });
       await fetchStatus();
     } catch (err) {
+      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
+      setDeployFailed(true);
       toast.error(err instanceof Error ? err.message : "Deploy failed", { id: tid });
     } finally {
       setDeploying(false);
+      // Keep panel visible for 3s after completion/failure, then hide
+      setTimeout(() => {
+        setDeployStep(-1);
+        setDeployFailed(false);
+      }, 3_000);
     }
   }
 
@@ -465,6 +486,11 @@ export function ProjectDetailClient() {
         </div>
       </div>
 
+      {/* ── Deploy Progress ──────────────────────────────────────────────────── */}
+      {deployStep >= 0 && (
+        <DeployProgressPanel step={deployStep} failed={deployFailed} />
+      )}
+
       {/* ── Blue / Green Slots ───────────────────────────────────────────────── */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
         <div className="flex items-center justify-between mb-5">
@@ -631,6 +657,105 @@ export function ProjectDetailClient() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteOpen(false)}
       />
+    </div>
+  );
+}
+
+// ── Deploy Progress Panel ─────────────────────────────────────────────────────
+
+const DEPLOY_STEPS = [
+  { label: "Pulling source",     description: "Cloning / updating git repository" },
+  { label: "Building image",     description: "Running docker build" },
+  { label: "Starting container", description: "Running new container" },
+  { label: "Health check",       description: "Waiting for app to respond" },
+  { label: "Switching traffic",  description: "Updating nginx upstream" },
+];
+
+function DeployProgressPanel({ step, failed }: { step: number; failed: boolean }) {
+  const done = step >= DEPLOY_STEPS.length;
+  return (
+    <div className={`bg-zinc-900 border rounded-xl p-5 transition-colors duration-500 ${
+      failed ? "border-red-800/60" : done ? "border-emerald-800/40" : "border-zinc-800"
+    }`}>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-sm font-medium text-zinc-400">Deploy Progress</h2>
+        {done && !failed && (
+          <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
+            <span className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center text-[10px]">✓</span>
+            Complete
+          </span>
+        )}
+        {failed && (
+          <span className="text-xs font-semibold text-red-400 flex items-center gap-1.5">
+            <span className="w-4 h-4 rounded-full bg-red-500/20 flex items-center justify-center text-[10px]">✕</span>
+            Failed
+          </span>
+        )}
+        {!done && !failed && (
+          <span className="text-xs text-zinc-600">
+            Step {Math.min(step + 1, DEPLOY_STEPS.length)} of {DEPLOY_STEPS.length}
+          </span>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        {DEPLOY_STEPS.map((s, i) => {
+          const isActive  = i === step && !done && !failed;
+          const isDone    = i < step || done;
+          const isFailed  = failed && i === step;
+          const isPending = !isDone && !isActive && !isFailed;
+
+          return (
+            <div key={i} className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
+              isActive ? "bg-zinc-800/70" : "bg-transparent"
+            }`}>
+              {/* Step icon */}
+              <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold transition-colors ${
+                isDone    ? "bg-emerald-500/20 text-emerald-400" :
+                isFailed  ? "bg-red-500/20 text-red-400" :
+                isActive  ? "bg-blue-500/20 text-blue-400" :
+                            "bg-zinc-800 text-zinc-600"
+              }`}>
+                {isDone   ? "✓" :
+                 isFailed ? "✕" :
+                 isActive ? (
+                   <span className="w-2.5 h-2.5 border border-blue-400 border-t-transparent rounded-full animate-spin block" />
+                 ) : String(i + 1)}
+              </div>
+
+              {/* Step text */}
+              <div className="flex-1 min-w-0">
+                <span className={`text-sm font-medium ${
+                  isDone    ? "text-zinc-400 line-through" :
+                  isFailed  ? "text-red-400" :
+                  isActive  ? "text-zinc-100" :
+                              "text-zinc-600"
+                }`}>
+                  {s.label}
+                </span>
+                {isActive && (
+                  <span className="block text-xs text-zinc-500 mt-0.5">{s.description}</span>
+                )}
+              </div>
+
+              {/* Duration indicator */}
+              {isDone && (
+                <span className="text-xs text-zinc-600 shrink-0">done</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Progress bar */}
+      {!failed && (
+        <div className="mt-4 h-1 bg-zinc-800 rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-700 ${done ? "bg-emerald-500" : "bg-blue-500"}`}
+            style={{ width: `${done ? 100 : (Math.min(step, DEPLOY_STEPS.length) / DEPLOY_STEPS.length) * 100}%` }}
+          />
+        </div>
+      )}
     </div>
   );
 }

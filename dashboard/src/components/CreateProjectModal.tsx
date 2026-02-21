@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { api, type CreateProjectInput } from "@/lib/api";
 import toast from "react-hot-toast";
 
@@ -41,6 +41,58 @@ export function CreateProjectModal({ open, onClose, onCreated }: Props) {
   const [envRows, setEnvRows] = useState<EnvRow[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Partial<typeof DEFAULTS>>({});
+
+  // Branch auto-fetch state
+  const [branches, setBranches] = useState<string[]>([]);
+  const [branchesLoading, setBranchesLoading] = useState(false);
+  const [branchOpen, setBranchOpen] = useState(false);
+  const branchInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch branches when repoUrl changes (debounced 800ms)
+  useEffect(() => {
+    const url = form.repoUrl.trim();
+    const match = url.match(/github\.com\/([^/]+)\/([^/.\s]+?)(?:\.git)?(?:[\/?#].*)?$/);
+    if (!match) {
+      setBranches([]);
+      setBranchesLoading(false);
+      return;
+    }
+    const [, owner, repo] = match;
+    setBranchesLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `https://api.github.com/repos/${owner}/${repo}/branches?per_page=100`
+        );
+        if (res.ok) {
+          const data = (await res.json()) as { name: string }[];
+          const names = data.map((b) => b.name);
+          setBranches(names);
+          // Auto-select default branch if current value isn't in the list
+          setForm((prev) => ({
+            ...prev,
+            branch: names.includes(prev.branch)
+              ? prev.branch
+              : names.includes("main")
+              ? "main"
+              : names.includes("master")
+              ? "master"
+              : names[0] ?? prev.branch,
+          }));
+        } else {
+          setBranches([]);
+        }
+      } catch {
+        setBranches([]);
+      } finally {
+        setBranchesLoading(false);
+      }
+    }, 800);
+    return () => {
+      clearTimeout(timer);
+      setBranchesLoading(false);
+    };
+  }, [form.repoUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!open) return null;
 
@@ -106,6 +158,7 @@ export function CreateProjectModal({ open, onClose, onCreated }: Props) {
       setForm(DEFAULTS);
       setEnvRows([]);
       setErrors({});
+      setBranches([]);
       onCreated();
       onClose();
     } catch (err) {
@@ -120,8 +173,14 @@ export function CreateProjectModal({ open, onClose, onCreated }: Props) {
     setForm(DEFAULTS);
     setEnvRows([]);
     setErrors({});
+    setBranches([]);
     onClose();
   }
+
+  // Filtered branches for dropdown
+  const filteredBranches = branches.filter((b) =>
+    b.toLowerCase().includes(form.branch.toLowerCase())
+  );
 
   return (
     <div
@@ -164,24 +223,92 @@ export function CreateProjectModal({ open, onClose, onCreated }: Props) {
 
             {/* Repo URL */}
             <Field label="Repository URL" error={errors.repoUrl} required>
-              <input
-                type="text"
-                value={form.repoUrl}
-                onChange={(e) => set("repoUrl", e.target.value)}
-                placeholder="https://github.com/you/repo"
-                className={input(errors.repoUrl)}
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  value={form.repoUrl}
+                  onChange={(e) => set("repoUrl", e.target.value)}
+                  placeholder="https://github.com/you/repo"
+                  className={input(errors.repoUrl)}
+                />
+                {branchesLoading && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <span className="w-3 h-3 border-2 border-zinc-600 border-t-zinc-300 rounded-full animate-spin block" />
+                  </span>
+                )}
+              </div>
+              {!branchesLoading && branches.length > 0 && (
+                <p className="text-xs text-emerald-600 mt-1">
+                  ✓ {branches.length} branches loaded
+                </p>
+              )}
             </Field>
 
-            {/* Branch */}
+            {/* Branch — combobox with auto-fetched list */}
             <Field label="Branch" error={errors.branch} required>
-              <input
-                type="text"
-                value={form.branch}
-                onChange={(e) => set("branch", e.target.value)}
-                placeholder="main"
-                className={input(errors.branch)}
-              />
+              <div className="relative">
+                <input
+                  ref={branchInputRef}
+                  type="text"
+                  value={form.branch}
+                  onChange={(e) => {
+                    set("branch", e.target.value);
+                    setBranchOpen(true);
+                  }}
+                  onFocus={() => setBranchOpen(branches.length > 0)}
+                  onBlur={() => setTimeout(() => setBranchOpen(false), 150)}
+                  placeholder="main"
+                  className={`${input(errors.branch)} pr-8`}
+                />
+                {branches.length > 0 && (
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      setBranchOpen((v) => !v);
+                      branchInputRef.current?.focus();
+                    }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                      <path d="M6 8L1 3h10L6 8z" />
+                    </svg>
+                  </button>
+                )}
+
+                {/* Branch dropdown */}
+                {branchOpen && filteredBranches.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-zinc-800 border border-zinc-700 rounded-lg shadow-2xl z-20 max-h-44 overflow-y-auto">
+                    {filteredBranches.map((b) => (
+                      <button
+                        key={b}
+                        type="button"
+                        onMouseDown={() => {
+                          set("branch", b);
+                          setBranchOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 text-sm transition-colors flex items-center gap-2 ${
+                          b === form.branch
+                            ? "bg-zinc-700 text-zinc-100"
+                            : "text-zinc-300 hover:bg-zinc-700/60"
+                        }`}
+                      >
+                        <span className="text-zinc-500 text-xs font-mono">⎇</span>
+                        {b}
+                        {b === form.branch && (
+                          <span className="ml-auto text-zinc-500 text-xs">✓</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {branches.length === 0 && !branchesLoading && form.repoUrl.includes("github.com") && (
+                <p className="text-xs text-zinc-600 mt-1">
+                  Enter a valid public GitHub URL to load branches automatically.
+                </p>
+              )}
             </Field>
 
             {/* Build context */}
