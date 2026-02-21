@@ -14,6 +14,17 @@ import { ConfirmModal } from "./ConfirmModal";
 import { MetricsChart, type MetricSample } from "./MetricsChart";
 import { LogsViewer } from "./LogsViewer";
 
+// ── Constants ─────────────────────────────────────────────────────────────────
+const HEALTH_PATH_OPTIONS = [
+  { value: "/health",     label: "Standard — /health" },
+  { value: "/healthz",    label: "Kubernetes — /healthz" },
+  { value: "/api/health", label: "API prefix — /api/health" },
+  { value: "/status",     label: "Status — /status" },
+  { value: "/ping",       label: "Ping — /ping" },
+  { value: "/ready",      label: "Readiness — /ready" },
+  { value: "/",           label: "Root — /" },
+];
+
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
   const k = 1024;
@@ -53,6 +64,15 @@ export function ProjectDetailClient() {
   const [deleting, setDeleting] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
 
+  // Settings panel
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [settingsForm, setSettingsForm] = useState({ branch: "", buildContext: "", appPort: "", healthPath: "", basePort: "" });
+
+  // Env editor
+  const [envRows, setEnvRows] = useState<{ key: string; value: string }[]>([]);
+  const [savingEnv, setSavingEnv] = useState(false);
+
   // ── Status ─────────────────────────────────────────────────────────────────
   const fetchStatus = useCallback(async () => {
     try {
@@ -61,6 +81,18 @@ export function ProjectDetailClient() {
         api.deployments.list(),
       ]);
       setProject(p);
+
+      // Seed settings form + env rows on first load (don't overwrite user edits)
+      setSettingsForm((prev) =>
+        prev.branch === ""
+          ? { branch: p.branch, buildContext: p.buildContext ?? ".", appPort: String(p.appPort), healthPath: p.healthPath, basePort: String(p.basePort) }
+          : prev
+      );
+      setEnvRows((prev) =>
+        prev.length === 0
+          ? Object.entries(p.env ?? {}).map(([key, value]) => ({ key, value }))
+          : prev
+      );
 
       const projectDeps = deployments
         .filter((d) => d.projectId === projectId)
@@ -187,6 +219,44 @@ export function ProjectDetailClient() {
     toast.success("Refreshed", { duration: 1500 });
   }
 
+  async function handleSaveSettings() {
+    setSavingSettings(true);
+    const tid = toast.loading("Saving settings...");
+    try {
+      await api.projects.update(projectId, {
+        branch: settingsForm.branch.trim() || undefined,
+        buildContext: settingsForm.buildContext.trim() || undefined,
+        appPort: settingsForm.appPort ? parseInt(settingsForm.appPort, 10) : undefined,
+        healthPath: settingsForm.healthPath.trim() || undefined,
+        basePort: settingsForm.basePort ? parseInt(settingsForm.basePort, 10) : undefined,
+      });
+      toast.success("Settings saved", { id: tid });
+      await fetchStatus();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Save failed", { id: tid });
+    } finally {
+      setSavingSettings(false);
+    }
+  }
+
+  async function handleSaveEnv() {
+    setSavingEnv(true);
+    const tid = toast.loading("Saving env vars...");
+    try {
+      const env: Record<string, string> = {};
+      for (const row of envRows) {
+        if (row.key.trim()) env[row.key.trim()] = row.value;
+      }
+      await api.projects.updateEnv(projectId, env);
+      toast.success("Environment variables saved", { id: tid });
+      await fetchStatus();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Save failed", { id: tid });
+    } finally {
+      setSavingEnv(false);
+    }
+  }
+
   // ── Loading skeleton ───────────────────────────────────────────────────────
   if (initialLoading) {
     return (
@@ -295,11 +365,80 @@ export function ProjectDetailClient() {
           </button>
 
           <button
+            onClick={() => setSettingsOpen((v) => !v)}
+            className="w-full py-2 px-4 rounded-lg border border-zinc-700 text-zinc-500 text-sm hover:text-zinc-300 hover:border-zinc-600 transition-colors"
+          >
+            {settingsOpen ? "Hide Settings" : "Settings"}
+          </button>
+
+          <button
             onClick={handleRefresh}
             className="w-full py-2 px-4 rounded-lg border border-zinc-700 text-zinc-500 text-sm hover:text-zinc-300 hover:border-zinc-600 transition-colors"
           >
             Refresh
           </button>
+
+          {/* Settings inline form */}
+          {settingsOpen && (
+            <div className="pt-3 border-t border-zinc-800 space-y-3">
+              <p className="text-xs font-medium text-zinc-400">Project Settings</p>
+              <SField label="Branch">
+                <input
+                  type="text"
+                  value={settingsForm.branch}
+                  onChange={(e) => setSettingsForm((p) => ({ ...p, branch: e.target.value }))}
+                  className={sinput}
+                />
+              </SField>
+              <SField label="Build context">
+                <input
+                  type="text"
+                  value={settingsForm.buildContext}
+                  onChange={(e) => setSettingsForm((p) => ({ ...p, buildContext: e.target.value }))}
+                  placeholder="."
+                  className={sinput}
+                />
+              </SField>
+              <SField label="App port">
+                <input
+                  type="number"
+                  value={settingsForm.appPort}
+                  onChange={(e) => setSettingsForm((p) => ({ ...p, appPort: e.target.value }))}
+                  className={sinput}
+                />
+              </SField>
+              <SField label="Health path">
+                <input
+                  type="text"
+                  list="s-health-path-opts"
+                  value={settingsForm.healthPath}
+                  onChange={(e) => setSettingsForm((p) => ({ ...p, healthPath: e.target.value }))}
+                  placeholder="/health"
+                  className={sinput}
+                />
+                <datalist id="s-health-path-opts">
+                  {HEALTH_PATH_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value} label={o.label} />
+                  ))}
+                </datalist>
+              </SField>
+              <SField label="Base port">
+                <input
+                  type="number"
+                  value={settingsForm.basePort}
+                  onChange={(e) => setSettingsForm((p) => ({ ...p, basePort: e.target.value }))}
+                  className={sinput}
+                />
+              </SField>
+              <button
+                onClick={handleSaveSettings}
+                disabled={savingSettings}
+                className="w-full py-1.5 text-xs rounded-lg bg-zinc-700 text-zinc-200 hover:bg-zinc-600 transition-colors disabled:opacity-40"
+              >
+                {savingSettings ? <Spinner label="Saving..." /> : "Save settings"}
+              </button>
+            </div>
+          )}
 
           <div className="mt-auto pt-4 border-t border-zinc-800 space-y-2">
             <KV k="Container" v={activeDeployment?.containerName ?? "—"} mono truncate />
@@ -357,6 +496,62 @@ export function ProjectDetailClient() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* ── Environment Variables ────────────────────────────────────────────── */}
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-medium text-zinc-400">Environment Variables</h2>
+          <button
+            type="button"
+            onClick={() => setEnvRows((prev) => [...prev, { key: "", value: "" }])}
+            className="text-xs text-zinc-400 hover:text-zinc-200 border border-zinc-700 hover:border-zinc-500 rounded px-2 py-0.5 transition-colors"
+          >
+            + Add
+          </button>
+        </div>
+
+        {envRows.length === 0 ? (
+          <p className="text-xs text-zinc-700 py-2">No env vars set. Click Add to inject variables into the next deployment.</p>
+        ) : (
+          <div className="space-y-2">
+            {envRows.map((row, i) => (
+              <div key={i} className="flex gap-2 items-center">
+                <input
+                  type="text"
+                  value={row.key}
+                  onChange={(e) => setEnvRows((prev) => prev.map((r, idx) => idx === i ? { ...r, key: e.target.value } : r))}
+                  placeholder="KEY"
+                  className="flex-1 bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs font-mono text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
+                />
+                <input
+                  type="text"
+                  value={row.value}
+                  onChange={(e) => setEnvRows((prev) => prev.map((r, idx) => idx === i ? { ...r, value: e.target.value } : r))}
+                  placeholder="value"
+                  className="flex-1 bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs font-mono text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => setEnvRows((prev) => prev.filter((_, idx) => idx !== i))}
+                  className="text-zinc-600 hover:text-red-400 transition-colors text-sm px-1"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-4 flex justify-end">
+          <button
+            onClick={handleSaveEnv}
+            disabled={savingEnv}
+            className="px-4 py-1.5 text-xs rounded-lg bg-zinc-700 text-zinc-200 hover:bg-zinc-600 transition-colors disabled:opacity-40"
+          >
+            {savingEnv ? <Spinner label="Saving..." /> : "Save env vars"}
+          </button>
+        </div>
       </div>
 
       {/* ── Resource Metrics ─────────────────────────────────────────────────── */}
@@ -508,5 +703,16 @@ function Spinner({ label }: { label: string }) {
       <span className="w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin" />
       {label}
     </span>
+  );
+}
+
+const sinput = "w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-mono text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500";
+
+function SField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="block text-xs text-zinc-500 mb-1">{label}</label>
+      {children}
+    </div>
   );
 }

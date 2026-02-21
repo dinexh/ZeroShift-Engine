@@ -94,6 +94,14 @@ export interface CreateProjectInput {
   env: Record<string, string>;
 }
 
+export interface UpdateProjectInput {
+  branch?: string;
+  buildContext?: string;
+  appPort?: number;
+  healthPath?: string;
+  basePort?: number;
+}
+
 export const api = {
   projects: {
     list: () =>
@@ -102,6 +110,10 @@ export const api = {
       request<{ project: Project }>("GET", `/api/v1/projects/${id}`),
     create: (data: CreateProjectInput) =>
       request<{ project: Project }>("POST", "/api/v1/projects", data),
+    update: (id: string, data: UpdateProjectInput) =>
+      request<{ project: Project }>("PATCH", `/api/v1/projects/${id}`, data),
+    updateEnv: (id: string, env: Record<string, string>) =>
+      request<{ project: Project }>("PATCH", `/api/v1/projects/${id}/env`, { env }),
     delete: (id: string) =>
       request<void>("DELETE", `/api/v1/projects/${id}`),
     metrics: (id: string) =>
