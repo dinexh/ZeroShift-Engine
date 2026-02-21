@@ -107,6 +107,55 @@ export interface UpdateProjectInput {
   basePort?: number;
 }
 
+export interface ServerStats {
+  status: "ok" | "unavailable";
+  cpu_percent: number;
+  memory_percent: number;
+  disk_percent: number;
+  network_sent: number;
+  network_recv: number;
+  uptime: number;
+  load_avg: [number, number, number];
+  process_count: number;
+  timestamp: string;
+}
+
+export interface MonixConnection {
+  local_address?: string;
+  remote_address?: string;
+  state?: string;
+  pid?: number;
+  process?: string;
+}
+
+export interface MonixAlert {
+  type?: string;
+  message?: string;
+  severity?: string;
+  timestamp?: string;
+}
+
+export interface MonixProcess {
+  pid: number;
+  name: string;
+  cpu_percent: number;
+  memory_percent: number;
+}
+
+export interface ServerDashboard {
+  status: "ok" | "unavailable";
+  connections: MonixConnection[];
+  alerts: MonixAlert[];
+  system_stats: ServerStats;
+  traffic_summary: {
+    total_requests: number;
+    unique_ips: number;
+    total_404s: number;
+    high_risk_hits: number;
+    suspicious_ips: { ip: string; threat_score: number; total_hits: number }[];
+  };
+}
+
 export const api = {
   projects: {
     list: () =>
@@ -133,5 +182,11 @@ export const api = {
       request<{ deployments: Deployment[] }>("GET", "/api/v1/deployments"),
     deploy: (projectId: string) =>
       request<DeployResult>("POST", "/api/v1/deploy", { projectId }),
+  },
+  system: {
+    serverStats: () =>
+      request<ServerStats>("GET", "/api/v1/system/server-stats"),
+    serverDashboard: () =>
+      request<ServerDashboard>("GET", "/api/v1/system/server-dashboard"),
   },
 };

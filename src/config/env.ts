@@ -22,6 +22,8 @@ export const config = {
   dockerNetwork: optionalEnv("DOCKER_NETWORK", "zeroshift-net"),
   nginxConfigPath: optionalEnv("NGINX_CONFIG_PATH", "/etc/nginx/conf.d/upstream.conf"),
   projectsRootPath: optionalEnv("PROJECTS_ROOT_PATH", "/var/zeroshift/projects"),
+  monixPath: optionalEnv("MONIX_PATH", "/opt/monix"),
+  monixPort: parseInt(optionalEnv("MONIX_PORT", "3030"), 10),
   validation: {
     healthTimeoutMs: 5000,
     retryDelayMs: 2000,

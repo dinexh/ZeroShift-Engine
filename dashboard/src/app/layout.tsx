@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Toaster } from "react-hot-toast";
+import { Sidebar } from "@/components/Sidebar";
+import { Header } from "@/components/Header";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -11,15 +13,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className="min-h-screen bg-zinc-950 text-zinc-100">
-        <header className="border-b border-zinc-800 px-6 py-4">
-          <div className="max-w-7xl mx-auto flex items-center gap-3">
-            <span className="text-lg font-semibold tracking-tight">ZeroShift Engine</span>
-            <span className="text-xs text-zinc-500 bg-zinc-900 border border-zinc-700 px-2 py-0.5 rounded">
-              dashboard
-            </span>
+        <div className="flex h-screen overflow-hidden bg-zinc-950">
+          <Sidebar />
+          <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+            <Header />
+            <main className="flex-1 overflow-y-auto px-6 py-6">{children}</main>
           </div>
-        </header>
-        <main className="max-w-7xl mx-auto px-6 py-8">{children}</main>
+        </div>
         <Toaster
           position="bottom-right"
           toastOptions={{
