@@ -30,6 +30,7 @@ export interface Deployment {
   port: number;
   color: DeploymentColor;
   status: DeploymentStatus;
+  errorMessage?: string | null;
   projectId: string;
   createdAt: string;
   updatedAt: string;

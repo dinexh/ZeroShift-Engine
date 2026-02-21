@@ -329,6 +329,17 @@ export function ProjectDetailClient() {
             <RunningDot running={containerRunning} />
           </div>
 
+          {/* Error banner — shown when latest deployment failed */}
+          {activeDeployment?.status === "FAILED" && activeDeployment.errorMessage && (
+            <div className="mb-5 flex items-start gap-3 rounded-lg bg-red-950/30 border border-red-800/40 px-4 py-3">
+              <span className="text-red-400 text-sm shrink-0 mt-0.5">✕</span>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-red-400 mb-0.5">Deployment failed</p>
+                <p className="text-xs text-red-300/70 font-mono break-words">{activeDeployment.errorMessage}</p>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <Stat label="Status">
               {activeDeployment
@@ -542,14 +553,14 @@ export function ProjectDetailClient() {
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-zinc-800">
-                  {["Version", "Slot", "Container", "Status", "Port", "Deployed"].map((h) => (
+                  {["Version", "Slot", "Container", "Status", "Port", "Deployed", "Error"].map((h) => (
                     <th key={h} className="text-left text-zinc-600 font-medium pb-2 pr-4">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/60">
                 {deploymentHistory.map((d) => (
-                  <tr key={d.id} className="hover:bg-zinc-800/30 transition-colors">
+                  <tr key={d.id} className={`hover:bg-zinc-800/30 transition-colors ${d.status === "FAILED" ? "bg-red-950/10" : ""}`}>
                     <td className="py-2 pr-4 font-mono text-zinc-300">v{d.version}</td>
                     <td className="py-2 pr-4">
                       <span className={`font-semibold ${d.color === "BLUE" ? "text-blue-400" : "text-emerald-400"}`}>
@@ -559,7 +570,19 @@ export function ProjectDetailClient() {
                     <td className="py-2 pr-4 font-mono text-zinc-500 max-w-[140px] truncate">{d.containerName}</td>
                     <td className="py-2 pr-4"><StatusBadge status={d.status} /></td>
                     <td className="py-2 pr-4 font-mono text-zinc-500">{d.port}</td>
-                    <td className="py-2 text-zinc-500">{timeAgo(d.updatedAt)}</td>
+                    <td className="py-2 pr-4 text-zinc-500">{timeAgo(d.updatedAt)}</td>
+                    <td className="py-2 max-w-[200px]">
+                      {d.errorMessage ? (
+                        <span
+                          className="text-xs text-red-400/70 font-mono truncate block"
+                          title={d.errorMessage}
+                        >
+                          {d.errorMessage}
+                        </span>
+                      ) : (
+                        <span className="text-zinc-700">—</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

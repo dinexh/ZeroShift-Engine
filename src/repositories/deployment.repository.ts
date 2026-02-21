@@ -77,10 +77,14 @@ export class DeploymentRepository {
     });
   }
 
-  async updateStatus(id: string, status: DeploymentStatus): Promise<Deployment> {
+  async updateStatus(
+    id: string,
+    status: DeploymentStatus,
+    errorMessage?: string
+  ): Promise<Deployment> {
     return prisma.deployment.update({
       where: { id },
-      data: { status },
+      data: { status, ...(errorMessage !== undefined ? { errorMessage } : {}) },
     });
   }
 }

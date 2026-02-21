@@ -46,6 +46,7 @@ model Deployment {
   port          Int
   color         DeploymentColor
   status        DeploymentStatus @default(PENDING)
+  errorMessage  String?
   projectId     String
   project       Project          @relation(fields: [projectId], references: [id])
   createdAt     DateTime         @default(now())

@@ -133,9 +133,10 @@ export class DeploymentService {
       );
 
       if (!result.success) {
-        logger.error({ projectId, error: result.error }, "Validation failed");
-        await this.cleanupFailedContainer(containerName, deployment.id);
-        throw new DeploymentError(result.error ?? "Health check failed");
+        const errMsg = result.error ?? "Health check failed";
+        logger.error({ projectId, error: errMsg }, "Validation failed");
+        await this.cleanupFailedContainer(containerName, deployment.id, errMsg);
+        throw new DeploymentError(errMsg);
       }
 
       // ── Step 7: Switch traffic ─────────────────────────────────────────────
@@ -169,9 +170,12 @@ export class DeploymentService {
         message: `Deployment successful — ${containerName} is live on port ${hostPort}`,
       };
     } catch (err) {
-      // Mark FAILED if we created a record but haven't marked it yet
+      // Mark FAILED with the error message so the dashboard can display it
       if (deploymentId) {
-        await this.repo.updateStatus(deploymentId, DeploymentStatus.FAILED).catch(() => null);
+        const errMsg = err instanceof Error ? err.message : String(err);
+        await this.repo
+          .updateStatus(deploymentId, DeploymentStatus.FAILED, errMsg)
+          .catch(() => null);
       }
       throw err;
     } finally {
@@ -193,10 +197,16 @@ export class DeploymentService {
     return this.repo.findAll();
   }
 
-  private async cleanupFailedContainer(containerName: string, deploymentId: string): Promise<void> {
+  private async cleanupFailedContainer(
+    containerName: string,
+    deploymentId: string,
+    errorMessage?: string
+  ): Promise<void> {
     await stopContainer(containerName).catch(() => null);
     await removeContainer(containerName).catch(() => null);
-    await this.repo.updateStatus(deploymentId, DeploymentStatus.FAILED).catch(() => null);
+    await this.repo
+      .updateStatus(deploymentId, DeploymentStatus.FAILED, errorMessage)
+      .catch(() => null);
   }
 
   private acquireLock(projectId: string): boolean {
