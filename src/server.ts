@@ -4,17 +4,16 @@ import { logger } from "./utils/logger";
 import prisma from "./prisma/client";
 import { ReconciliationService } from "./services/reconciliation.service";
 import { ContainerMonitorService } from "./services/container-monitor.service";
-import { MonixService } from "./services/monix.service";
+import { systemMetrics } from "./controllers/system.controller";
 
 async function start(): Promise<void> {
   const app = await buildApp();
   const monitor = new ContainerMonitorService();
-  const monix   = new MonixService();
 
   // Graceful shutdown
   const shutdown = async (signal: string): Promise<void> => {
     logger.info({ signal }, "Shutting down");
-    monix.stop();
+    systemMetrics.stop();
     monitor.stop();
     await app.close();
     await prisma.$disconnect();
@@ -43,7 +42,7 @@ async function start(): Promise<void> {
     );
 
     monitor.start();
-    monix.start();
+    systemMetrics.start();
   } catch (err) {
     logger.fatal({ err }, "Failed to start server");
     await prisma.$disconnect();

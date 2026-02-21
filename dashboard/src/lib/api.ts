@@ -111,9 +111,15 @@ export interface ServerStats {
   status: "ok" | "unavailable";
   cpu_percent: number;
   memory_percent: number;
+  memory_used: number;
+  memory_total: number;
   disk_percent: number;
+  disk_used: number;
+  disk_total: number;
   network_sent: number;
   network_recv: number;
+  network_sent_rate: number;
+  network_recv_rate: number;
   uptime: number;
   load_avg: [number, number, number];
   process_count: number;
@@ -144,16 +150,10 @@ export interface MonixProcess {
 
 export interface ServerDashboard {
   status: "ok" | "unavailable";
-  connections: MonixConnection[];
-  alerts: MonixAlert[];
   system_stats: ServerStats;
-  traffic_summary: {
-    total_requests: number;
-    unique_ips: number;
-    total_404s: number;
-    high_risk_hits: number;
-    suspicious_ips: { ip: string; threat_score: number; total_hits: number }[];
-  };
+  connections: MonixConnection[];
+  top_processes: MonixProcess[];
+  alerts: MonixAlert[];
 }
 
 export const api = {

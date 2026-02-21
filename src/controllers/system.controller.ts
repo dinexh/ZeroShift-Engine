@@ -1,14 +1,21 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { ReconciliationService } from "../services/reconciliation.service";
+import { SystemMetricsService } from "../services/system-metrics.service";
 
 const reconciliationService = new ReconciliationService();
-const MONIX_BASE = "http://localhost:3030/api";
 
-const EMPTY_SERVER_STATS = {
+// Singleton shared with server.ts via module-level export
+export const systemMetrics = new SystemMetricsService();
+
+const EMPTY_STATS = {
   status: "unavailable",
   cpu_percent: 0,
   memory_percent: 0,
+  memory_used: 0,
+  memory_total: 0,
   disk_percent: 0,
+  disk_used: 0,
+  disk_total: 0,
   network_sent: 0,
   network_recv: 0,
   uptime: 0,
@@ -29,30 +36,23 @@ export async function getServerStatsHandler(
   _req: FastifyRequest,
   reply: FastifyReply
 ): Promise<void> {
-  try {
-    const res = await fetch(`${MONIX_BASE}/system-stats`, { signal: AbortSignal.timeout(3000) });
-    const data = await res.json() as Record<string, unknown>;
-    reply.code(200).send({ status: "ok", ...data });
-  } catch {
-    reply.code(200).send(EMPTY_SERVER_STATS);
-  }
+  reply.code(200).send(systemMetrics.getStats() ?? EMPTY_STATS);
 }
 
 export async function getServerDashboardHandler(
   _req: FastifyRequest,
   reply: FastifyReply
 ): Promise<void> {
-  try {
-    const res = await fetch(`${MONIX_BASE}/dashboard`, { signal: AbortSignal.timeout(3000) });
-    const data = await res.json() as Record<string, unknown>;
-    reply.code(200).send({ status: "ok", ...data });
-  } catch {
+  const dashboard = systemMetrics.getDashboard();
+  if (!dashboard) {
     reply.code(200).send({
       status: "unavailable",
+      system_stats: EMPTY_STATS,
       connections: [],
+      top_processes: [],
       alerts: [],
-      system_stats: EMPTY_SERVER_STATS,
-      traffic_summary: { total_requests: 0, unique_ips: 0, total_404s: 0, high_risk_hits: 0, suspicious_ips: [] },
     });
+    return;
   }
+  reply.code(200).send(dashboard);
 }

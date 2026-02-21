@@ -7,6 +7,79 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { CreateProjectModal } from "@/components/CreateProjectModal";
 import { ConfirmModal } from "@/components/ConfirmModal";
 
+// ── Deployment status pie chart ───────────────────────────────────────────────
+function DeploymentPieChart({ deployments }: { deployments: Deployment[] }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const counts = {
+    ACTIVE:      deployments.filter(d => d.status === "ACTIVE").length,
+    FAILED:      deployments.filter(d => d.status === "FAILED").length,
+    ROLLED_BACK: deployments.filter(d => d.status === "ROLLED_BACK").length,
+    DEPLOYING:   deployments.filter(d => d.status === "DEPLOYING").length,
+    PENDING:     deployments.filter(d => d.status === "PENDING").length,
+  };
+
+  const data = Object.entries(counts)
+    .filter(([, v]) => v > 0)
+    .map(([name, value]) => ({ name, value }));
+
+  const COLORS: Record<string, string> = {
+    ACTIVE: "#34d399", FAILED: "#f87171", ROLLED_BACK: "#71717a",
+    DEPLOYING: "#fbbf24", PENDING: "#52525b",
+  };
+
+  if (!mounted || data.length === 0) {
+    return (
+      <div className="h-32 flex items-center justify-center">
+        <span className="text-xs text-zinc-700">No deployment data</span>
+      </div>
+    );
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { PieChart, Pie, Cell, Tooltip, Legend } = require("recharts");
+  return (
+    <PieChart width={220} height={160}>
+      <Pie data={data} cx={80} cy={70} innerRadius={38} outerRadius={60} paddingAngle={3} dataKey="value" isAnimationActive={false}>
+        {data.map((entry) => <Cell key={entry.name} fill={COLORS[entry.name] ?? "#71717a"} />)}
+      </Pie>
+      <Tooltip contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 6, fontSize: 11 }} />
+      <Legend wrapperStyle={{ fontSize: 10, color: "#71717a" }} />
+    </PieChart>
+  );
+}
+
+// ── Deployments per project bar chart ─────────────────────────────────────────
+function DeploymentsPerProjectChart({ projects, deployments }: { projects: Project[]; deployments: Deployment[] }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const data = projects.map(p => ({
+    name: p.name.length > 10 ? p.name.slice(0, 10) + "…" : p.name,
+    count: deployments.filter(d => d.projectId === p.id).length,
+    active: deployments.filter(d => d.projectId === p.id && d.status === "ACTIVE").length,
+  })).filter(d => d.count > 0).sort((a, b) => b.count - a.count).slice(0, 8);
+
+  if (!mounted || data.length === 0) {
+    return <div className="h-32 flex items-center justify-center"><span className="text-xs text-zinc-700">No data</span></div>;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } = require("recharts");
+  return (
+    <BarChart width={320} height={160} data={data} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+      <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+      <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#52525b" }} tickLine={false} axisLine={false} />
+      <YAxis tick={{ fontSize: 10, fill: "#52525b" }} tickLine={false} axisLine={false} allowDecimals={false} />
+      <Tooltip contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 6, fontSize: 11 }} formatter={(v: number) => [v, "Deployments"]} />
+      <Bar dataKey="count" radius={[4, 4, 0, 0]} isAnimationActive={false}>
+        {data.map((entry, i) => <Cell key={i} fill={entry.active > 0 ? "#34d399" : "#52525b"} />)}
+      </Bar>
+    </BarChart>
+  );
+}
+
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60_000);
@@ -297,6 +370,24 @@ export default function OverviewPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Deployment analytics charts ── */}
+      {Object.keys(deploymentMap).length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+            <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-4">Deployment Status</p>
+            <div className="flex items-center justify-center">
+              <DeploymentPieChart deployments={Object.values(deploymentMap)} />
+            </div>
+          </div>
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+            <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-4">Deployments per Project</p>
+            <div className="flex items-center justify-center">
+              <DeploymentsPerProjectChart projects={projects} deployments={Object.values(deploymentMap)} />
+            </div>
+          </div>
+        </div>
+      )}
 
       <CreateProjectModal
         open={createOpen}
