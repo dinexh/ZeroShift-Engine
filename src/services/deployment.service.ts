@@ -1,5 +1,6 @@
 import { Deployment, DeploymentColor, DeploymentStatus } from "@prisma/client";
 import { config } from "../config/env";
+import { parseProjectEnv } from "../utils/env";
 import { DeploymentRepository } from "../repositories/deployment.repository";
 import { ProjectRepository } from "../repositories/project.repository";
 import { buildImage, runContainer, stopContainer, removeContainer } from "../utils/docker";
@@ -106,12 +107,18 @@ export class DeploymentService {
 
       // ── Step 5: Start container ────────────────────────────────────────────
       logger.info({ projectId, step: 5, containerName, hostPort }, "Starting container");
+      const projectEnv = parseProjectEnv(project.env);
+      const envKeys = Object.keys(projectEnv);
+      if (envKeys.length > 0) {
+        logger.info({ projectId, envKeys }, "Injecting env keys");
+      }
       await runContainer(
         containerName,
         imageTag,
         hostPort,
         project.appPort,
-        config.docker.network
+        config.dockerNetwork,
+        projectEnv
       );
 
       // ── Step 6: Validate ───────────────────────────────────────────────────

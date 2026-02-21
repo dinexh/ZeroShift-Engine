@@ -5,7 +5,13 @@ import {
   getProjectHandler,
   deleteProjectHandler,
   rollbackProjectHandler,
+  updateProjectEnvHandler,
 } from "../controllers/project.controller";
+
+const envSchema = {
+  type: "object",
+  additionalProperties: { type: "string" },
+};
 
 const projectSchema = {
   type: "object",
@@ -18,6 +24,7 @@ const projectSchema = {
     appPort: { type: "number" },
     healthPath: { type: "string" },
     basePort: { type: "number" },
+    env: envSchema,
     createdAt: { type: "string" },
     updatedAt: { type: "string" },
   },
@@ -33,6 +40,16 @@ const createBodySchema = {
     appPort: { type: "integer", minimum: 1, maximum: 65535 },
     healthPath: { type: "string", minLength: 1 },
     basePort: { type: "integer", minimum: 1024, maximum: 65534 },
+    env: envSchema,
+  },
+  additionalProperties: false,
+};
+
+const updateEnvBodySchema = {
+  type: "object",
+  required: ["env"],
+  properties: {
+    env: envSchema,
   },
   additionalProperties: false,
 };
@@ -94,6 +111,19 @@ export async function projectRoutes(app: FastifyInstance): Promise<void> {
   app.delete("/projects/:id", {
     schema: {},
     handler: deleteProjectHandler,
+  });
+
+  app.patch("/projects/:id/env", {
+    schema: {
+      body: updateEnvBodySchema,
+      response: {
+        200: {
+          type: "object",
+          properties: { project: projectSchema },
+        },
+      },
+    },
+    handler: updateProjectEnvHandler,
   });
 
   app.post("/projects/:id/rollback", {

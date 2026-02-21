@@ -1,4 +1,5 @@
 import { Deployment, DeploymentStatus } from "@prisma/client";
+import { parseProjectEnv } from "../utils/env";
 import { DeploymentRepository } from "../repositories/deployment.repository";
 import { ProjectRepository } from "../repositories/project.repository";
 import { TrafficService } from "./traffic.service";
@@ -66,12 +67,18 @@ export class RollbackService {
 
     // Restart the old container using stored imageTag and port
     logger.info({ containerName: previous.containerName }, "Restarting previous container");
+    const projectEnv = parseProjectEnv(project.env);
+    const envKeys = Object.keys(projectEnv);
+    if (envKeys.length > 0) {
+      logger.info({ projectId, envKeys }, "Injecting env keys");
+    }
     await runContainer(
       previous.containerName,
       previous.imageTag,
       previous.port,
       project.appPort,
-      config.docker.network
+      config.dockerNetwork,
+      projectEnv
     );
 
     // Validate the restarted container before switching traffic

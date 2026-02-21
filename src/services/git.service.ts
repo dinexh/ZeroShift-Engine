@@ -11,7 +11,7 @@ export class GitService {
    * Returns the absolute path where the project's git repo lives on disk.
    */
   projectPath(project: Pick<Project, "id">): string {
-    return path.join(config.git.projectsBasePath, project.id);
+    return path.join(config.projectsRootPath, project.id);
   }
 
   /**
@@ -39,7 +39,7 @@ export class GitService {
   }
 
   private async ensureProjectDirectory(project: Pick<Project, "id">): Promise<void> {
-    const dir = path.join(config.git.projectsBasePath, project.id);
+    const dir = path.join(config.projectsRootPath, project.id);
     await fs.mkdir(dir, { recursive: true });
   }
 
@@ -73,7 +73,6 @@ export class GitService {
   }
 
   /**
-   * Injects the personal access token into the HTTPS URL if GIT_TOKEN is set.
    * Validates that only HTTPS URLs are used (SSH/custom protocols are rejected).
    */
   private buildAuthUrl(repoUrl: string): string {
@@ -82,14 +81,7 @@ export class GitService {
         "Only HTTPS repository URLs are supported. SSH URLs are not allowed."
       );
     }
-
-    const token = config.git.token;
-    if (!token) {
-      return repoUrl;
-    }
-
-    // Inject token as: https://<token>@github.com/...
-    return repoUrl.replace(/^(https?:\/\/)/i, `$1${token}@`);
+    return repoUrl;
   }
 
   private async isGitRepo(dir: string): Promise<boolean> {

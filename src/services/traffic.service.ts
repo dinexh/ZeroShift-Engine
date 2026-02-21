@@ -11,7 +11,7 @@ export class TrafficService {
    * restores it automatically if nginx -s reload fails.
    */
   async switchTrafficTo(port: number): Promise<void> {
-    const configPath = config.nginx.configPath;
+    const configPath = config.nginxConfigPath;
     const backupPath = `${configPath}.bak`;
     const tmpPath = `${configPath}.tmp`;
 

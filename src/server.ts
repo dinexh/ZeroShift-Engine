@@ -25,9 +25,15 @@ async function start(): Promise<void> {
     const report = await reconciliation.reconcile();
     logger.info(report, "Startup reconciliation complete");
 
-    await app.listen({ port: config.app.port, host: "0.0.0.0" });
+    const PORT = config.port || 9090;
+    await app.listen({ port: PORT, host: "0.0.0.0" });
     logger.info(
-      { port: config.app.port, env: config.app.env },
+      {
+        port: PORT,
+        dockerNetwork: config.dockerNetwork,
+        nginxConfigPath: config.nginxConfigPath,
+        projectsRootPath: config.projectsRootPath,
+      },
       "ZeroShift Engine is running"
     );
   } catch (err) {

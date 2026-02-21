@@ -12,15 +12,18 @@ export async function buildImage(imageTag: string, contextPath: string): Promise
 /**
  * Starts a Docker container in detached mode.
  * Maps hostPort on the host to containerPort inside the container.
+ * Injects each key-value pair in env as -e KEY=value arguments.
  */
 export async function runContainer(
   name: string,
   imageTag: string,
   hostPort: number,
   containerPort: number,
-  network: string
+  network: string,
+  env: Record<string, string> = {}
 ): Promise<void> {
   logger.info({ name, imageTag, hostPort, containerPort, network }, "Starting Docker container");
+  const envArgs = Object.entries(env).flatMap(([key, value]) => ["-e", `${key}=${value}`]);
   await execFileAsync("docker", [
     "run",
     "-d",
@@ -28,6 +31,7 @@ export async function runContainer(
     "--network", network,
     "-p", `${hostPort}:${containerPort}`,
     "--restart", "unless-stopped",
+    ...envArgs,
     imageTag,
   ]);
 }

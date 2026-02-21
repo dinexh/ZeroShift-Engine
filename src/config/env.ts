@@ -2,41 +2,30 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-function require(key: string): string {
+function requireEnv(key: string): string {
   const value = process.env[key];
   if (!value) {
-    throw new Error(`Missing required environment variable: ${key}`);
+    console.error(`[ZeroShift] FATAL: Missing required environment variable: ${key}`);
+    process.exit(1);
   }
   return value;
 }
 
-function optional(key: string, fallback: string): string {
+function optionalEnv(key: string, fallback: string): string {
   return process.env[key] ?? fallback;
 }
 
 export const config = {
-  app: {
-    port: parseInt(optional("PORT", "3000"), 10),
-    env: optional("NODE_ENV", "development"),
-    logLevel: optional("LOG_LEVEL", "info"),
-  },
-  database: {
-    url: require("DATABASE_URL"),
-  },
-  docker: {
-    network: optional("DOCKER_NETWORK", "zeroshift-net"),
-  },
-  nginx: {
-    configPath: optional("NGINX_CONFIG_PATH", "/etc/nginx/conf.d/upstream.conf"),
-  },
-  git: {
-    projectsBasePath: optional("PROJECTS_BASE_PATH", "/var/zeroshift/projects"),
-    token: optional("GIT_TOKEN", ""),
-  },
+  port: parseInt(optionalEnv("PORT", "9090"), 10) || 9090,
+  logLevel: optionalEnv("LOG_LEVEL", "info"),
+  databaseUrl: requireEnv("DATABASE_URL"),
+  dockerNetwork: optionalEnv("DOCKER_NETWORK", "zeroshift-net"),
+  nginxConfigPath: optionalEnv("NGINX_CONFIG_PATH", "/etc/nginx/conf.d/upstream.conf"),
+  projectsRootPath: optionalEnv("PROJECTS_ROOT_PATH", "/var/zeroshift/projects"),
   validation: {
-    healthTimeoutMs: parseInt(optional("HEALTH_TIMEOUT_MS", "5000"), 10),
-    retryDelayMs: parseInt(optional("HEALTH_RETRY_DELAY_MS", "2000"), 10),
-    maxLatencyMs: parseInt(optional("HEALTH_MAX_LATENCY_MS", "2000"), 10),
-    maxRetries: parseInt(optional("HEALTH_MAX_RETRIES", "5"), 10),
+    healthTimeoutMs: 5000,
+    retryDelayMs: 2000,
+    maxLatencyMs: 2000,
+    maxRetries: 5,
   },
 } as const;

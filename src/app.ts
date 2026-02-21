@@ -9,7 +9,7 @@ import { systemRoutes } from "./routes/system.routes";
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
     logger: {
-      level: config.app.logLevel,
+      level: config.logLevel,
     },
     disableRequestLogging: false,
   });
