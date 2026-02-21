@@ -12,6 +12,7 @@ export interface Project {
   name: string;
   repoUrl: string;
   branch: string;
+  buildContext: string;
   localPath: string;
   appPort: number;
   healthPath: string;
@@ -86,6 +87,7 @@ export interface CreateProjectInput {
   name: string;
   repoUrl: string;
   branch: string;
+  buildContext: string;
   appPort: number;
   healthPath: string;
   basePort: number;

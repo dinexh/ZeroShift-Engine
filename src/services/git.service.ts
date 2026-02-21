@@ -15,6 +15,14 @@ export class GitService {
   }
 
   /**
+   * Returns the Docker build context path — the repo root joined with
+   * buildContext (e.g. "." keeps it at root, "server" points to a subdir).
+   */
+  buildContextPath(project: Pick<Project, "id" | "buildContext">): string {
+    return path.join(config.projectsRootPath, project.id, project.buildContext);
+  }
+
+  /**
    * Ensures the project directory exists, then clones or updates the repo.
    * If the directory already contains a git repo → fetch + hard reset to remote branch.
    * If not → clone fresh.

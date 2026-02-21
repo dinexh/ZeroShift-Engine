@@ -12,6 +12,7 @@ interface CreateProjectBody {
   name: string;
   repoUrl: string;
   branch?: string;
+  buildContext?: string;
   appPort: number;
   healthPath?: string;
   basePort: number;
@@ -30,7 +31,7 @@ export async function createProjectHandler(
   req: FastifyRequest<{ Body: CreateProjectBody }>,
   reply: FastifyReply
 ): Promise<void> {
-  const { name, repoUrl, branch = "main", appPort, healthPath = "/health", basePort, env = {} } = req.body;
+  const { name, repoUrl, branch = "main", buildContext = ".", appPort, healthPath = "/health", basePort, env = {} } = req.body;
 
   const envError = validateEnvObject(env);
   if (envError) {
@@ -43,6 +44,7 @@ export async function createProjectHandler(
     name,
     repoUrl,
     branch,
+    buildContext,
     appPort,
     healthPath,
     basePort,

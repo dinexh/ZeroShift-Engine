@@ -29,6 +29,7 @@ model Project {
   appPort     Int
   healthPath  String       @default("/health")
   basePort    Int
+  buildContext String       @default(".")
   env         Json         @default("{}")
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt

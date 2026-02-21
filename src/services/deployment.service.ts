@@ -72,7 +72,8 @@ export class DeploymentService {
       // ── Step 1: Prepare source ─────────────────────────────────────────────
       logger.info({ projectId, step: 1 }, "Preparing source code");
       await this.git.prepareSource(project);
-      await ensureDockerfile(this.git.projectPath(project), project.appPort);
+      const buildContextPath = this.git.buildContextPath(project);
+      await ensureDockerfile(buildContextPath, project.appPort);
 
       // ── Step 2: Determine color and port ───────────────────────────────────
       const activeDeployment = await this.repo.findActiveForProject(projectId);
@@ -104,8 +105,8 @@ export class DeploymentService {
       deploymentId = deployment.id;
 
       // ── Step 4: Build image ────────────────────────────────────────────────
-      logger.info({ projectId, step: 4, imageTag }, "Building Docker image");
-      await buildImage(imageTag, this.git.projectPath(project));
+      logger.info({ projectId, step: 4, imageTag, buildContextPath }, "Building Docker image");
+      await buildImage(imageTag, buildContextPath);
 
       // ── Step 5: Start container ────────────────────────────────────────────
       logger.info({ projectId, step: 5, containerName, hostPort }, "Starting container");

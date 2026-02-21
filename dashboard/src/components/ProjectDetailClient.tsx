@@ -297,6 +297,7 @@ export function ProjectDetailClient() {
 
           <div className="mt-auto pt-4 border-t border-zinc-800 space-y-2">
             <KV k="App port" v={String(project.appPort)} />
+            <KV k="Build context" v={project.buildContext} mono />
             <KV k="Health path" v={project.healthPath} />
             <KV k="Container" v={activeDeployment?.containerName ?? "—"} mono truncate />
             <KV k="Image" v={activeDeployment?.imageTag ?? "—"} mono truncate />

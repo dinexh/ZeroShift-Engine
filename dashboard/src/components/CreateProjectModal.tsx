@@ -18,6 +18,7 @@ const DEFAULTS = {
   name: "",
   repoUrl: "",
   branch: "main",
+  buildContext: ".",
   appPort: "3000",
   healthPath: "/health",
   basePort: "3100",
@@ -79,6 +80,7 @@ export function CreateProjectModal({ open, onClose, onCreated }: Props) {
       name: form.name.trim(),
       repoUrl: form.repoUrl.trim(),
       branch: form.branch.trim(),
+      buildContext: form.buildContext.trim() || ".",
       appPort: parseInt(form.appPort, 10),
       healthPath: form.healthPath.trim() || "/health",
       basePort: parseInt(form.basePort, 10),
@@ -167,6 +169,17 @@ export function CreateProjectModal({ open, onClose, onCreated }: Props) {
                 onChange={(e) => set("branch", e.target.value)}
                 placeholder="main"
                 className={input(errors.branch)}
+              />
+            </Field>
+
+            {/* Build context */}
+            <Field label="Build context" hint="Subdirectory containing the Dockerfile (or where one will be generated). Use . for repo root.">
+              <input
+                type="text"
+                value={form.buildContext}
+                onChange={(e) => set("buildContext", e.target.value)}
+                placeholder="."
+                className={input(undefined)}
               />
             </Field>
 
