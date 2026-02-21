@@ -70,3 +70,47 @@ export async function inspectContainer(name: string): Promise<boolean> {
     return false;
   }
 }
+
+export interface RawContainerStats {
+  CPUPerc: string;
+  MemUsage: string;
+  MemPerc: string;
+  Name: string;
+}
+
+/**
+ * Returns a single live stats snapshot for a container.
+ * Returns null if the container is not running or does not exist.
+ */
+export async function getContainerStats(name: string): Promise<RawContainerStats | null> {
+  logger.debug({ name }, "Fetching container stats");
+  try {
+    const { stdout } = await execFileAsync("docker", [
+      "stats", "--no-stream", "--format", "{{json .}}", name,
+    ]);
+    const line = stdout.trim();
+    if (!line) return null;
+    return JSON.parse(line) as RawContainerStats;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Returns the last N log lines from a container (stdout + stderr combined).
+ * Returns an empty array if the container does not exist or has no logs.
+ */
+export async function getContainerLogs(name: string, tail = 200): Promise<string[]> {
+  logger.debug({ name, tail }, "Fetching container logs");
+  try {
+    const { stdout, stderr } = await execFileAsync("docker", [
+      "logs", "--tail", String(tail), "--timestamps", name,
+    ]);
+    return (stdout + "\n" + stderr)
+      .split("\n")
+      .filter((l) => l.trim() !== "")
+      .slice(-tail);
+  } catch {
+    return [];
+  }
+}

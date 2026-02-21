@@ -1,7 +1,28 @@
+# Dependencies
 node_modules/
+
+# Build outputs
 dist/
+dashboard/.next/
+dashboard/out/
+
+# Environment
 .env
+.env.local
+.env*.local
+
+# Logs
 *.log
+npm-debug.log*
+bun.lockb.log*
+
+# OS
 .DS_Store
-prisma/migrations/
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Test coverage
 coverage/
