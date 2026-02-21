@@ -1,6 +1,4 @@
 import { spawn, type ChildProcess } from "child_process";
-import { existsSync } from "fs";
-import path from "path";
 import { logger } from "../utils/logger";
 import { config } from "../config/env";
 
@@ -14,17 +12,7 @@ export class MonixService {
   private restartTimer: ReturnType<typeof setTimeout> | null = null;
 
   start(): void {
-    const entrypoint = path.join(config.monixPath, "app.py");
-
-    if (!existsSync(entrypoint)) {
-      logger.warn(
-        { monixPath: config.monixPath },
-        "Monix: app.py not found — server metrics will be unavailable. Set MONIX_PATH to the monix directory."
-      );
-      return;
-    }
-
-    this.spawn_(entrypoint);
+    this.spawn_();
   }
 
   stop(): void {
@@ -37,12 +25,12 @@ export class MonixService {
     }
   }
 
-  private spawn_(entrypoint: string): void {
-    logger.info({ monixPath: config.monixPath, port: config.monixPort }, "Monix: starting");
+  private spawn_(): void {
+    logger.info("Monix: starting (monix-cli --watch)");
 
-    this.proc = spawn("python3", [entrypoint], {
-      cwd:  config.monixPath,
-      env:  { ...process.env, PORT: String(config.monixPort) },
+    this.proc = spawn("monix-cli", ["--watch"], {
+      cwd:   config.monixPath,
+      env:   { ...process.env, PORT: String(config.monixPort) },
       stdio: ["ignore", "pipe", "pipe"],
     });
 
@@ -69,7 +57,7 @@ export class MonixService {
 
       this.restarts++;
       logger.info({ attempt: this.restarts, delayMs: RESTART_DELAY_MS }, "Monix: restarting");
-      this.restartTimer = setTimeout(() => this.spawn_(entrypoint), RESTART_DELAY_MS);
+      this.restartTimer = setTimeout(() => this.spawn_(), RESTART_DELAY_MS);
     });
 
     this.proc.on("error", (err) => {
