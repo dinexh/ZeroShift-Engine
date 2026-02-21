@@ -14,6 +14,18 @@ interface EnvRow {
   value: string;
 }
 
+const HEALTH_PATH_OPTIONS = [
+  { value: "/health",        label: "Standard — /health" },
+  { value: "/healthz",       label: "Kubernetes style — /healthz" },
+  { value: "/api/health",    label: "API prefix — /api/health" },
+  { value: "/api/healthz",   label: "API prefix — /api/healthz" },
+  { value: "/status",        label: "Status — /status" },
+  { value: "/ping",          label: "Ping — /ping" },
+  { value: "/ready",         label: "Readiness — /ready" },
+  { value: "/live",          label: "Liveness — /live" },
+  { value: "/",              label: "Root — /" },
+];
+
 const DEFAULTS = {
   name: "",
   repoUrl: "",
@@ -206,14 +218,22 @@ export function CreateProjectModal({ open, onClose, onCreated }: Props) {
             </div>
 
             {/* Health path */}
-            <Field label="Health check path" error={errors.healthPath}>
-              <input
-                type="text"
-                value={form.healthPath}
-                onChange={(e) => set("healthPath", e.target.value)}
-                placeholder="/health"
-                className={input(errors.healthPath)}
-              />
+            <Field label="Health check path" error={errors.healthPath} hint="ZeroShift hits this endpoint to confirm the container is live.">
+              <div className="relative">
+                <input
+                  type="text"
+                  list="health-path-suggestions"
+                  value={form.healthPath}
+                  onChange={(e) => set("healthPath", e.target.value)}
+                  placeholder="/health"
+                  className={input(errors.healthPath)}
+                />
+                <datalist id="health-path-suggestions">
+                  {HEALTH_PATH_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value} label={o.label} />
+                  ))}
+                </datalist>
+              </div>
             </Field>
 
             {/* Env vars */}

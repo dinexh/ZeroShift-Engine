@@ -81,11 +81,15 @@ export async function getProjectLogsHandler(
     return reply.code(404).send({ error: "NotFound", message: "Project not found" });
   }
 
+  // Prefer the active deployment; fall back to the most recent one of any
+  // status so failed container logs are still visible in the dashboard.
   const active = await deploymentRepo.findActiveForProject(req.params.id);
-  if (!active) {
+  const target = active ?? (await deploymentRepo.findAllForProject(req.params.id))[0] ?? null;
+
+  if (!target) {
     return reply.code(200).send({ lines: [], containerName: null });
   }
 
-  const lines = await getContainerLogs(active.containerName, 200);
-  reply.code(200).send({ lines, containerName: active.containerName });
+  const lines = await getContainerLogs(target.containerName, 200);
+  reply.code(200).send({ lines, containerName: target.containerName });
 }
