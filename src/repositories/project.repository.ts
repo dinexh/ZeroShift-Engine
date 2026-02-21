@@ -25,6 +25,8 @@ export class ProjectRepository {
   }
 
   async delete(id: string): Promise<Project> {
+    // Delete child deployments first to satisfy the foreign key constraint
+    await prisma.deployment.deleteMany({ where: { projectId: id } });
     return prisma.project.delete({ where: { id } });
   }
 }
