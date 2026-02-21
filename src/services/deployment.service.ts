@@ -3,7 +3,7 @@ import { config } from "../config/env";
 import { parseProjectEnv } from "../utils/env";
 import { DeploymentRepository } from "../repositories/deployment.repository";
 import { ProjectRepository } from "../repositories/project.repository";
-import { buildImage, runContainer, stopContainer, removeContainer } from "../utils/docker";
+import { buildImage, runContainer, stopContainer, removeContainer, getContainerLogs } from "../utils/docker";
 import { ensureDockerfile } from "../utils/dockerfile";
 import { logger } from "../utils/logger";
 import { ConflictError, DeploymentError, NotFoundError } from "../utils/errors";
@@ -133,10 +133,15 @@ export class DeploymentService {
       );
 
       if (!result.success) {
-        const errMsg = result.error ?? "Health check failed";
-        logger.error({ projectId, error: errMsg }, "Validation failed");
+        const healthErr = result.error ?? "Health check failed";
+        // Capture container logs BEFORE stopping/removing so they aren't lost
+        const containerLogs = await getContainerLogs(containerName, 50);
+        const errMsg = containerLogs.length > 0
+          ? `${healthErr}\n\n--- Container output ---\n${containerLogs.join("\n")}`
+          : healthErr;
+        logger.error({ projectId, error: healthErr, containerLogs }, "Validation failed");
         await this.cleanupFailedContainer(containerName, deployment.id, errMsg);
-        throw new DeploymentError(errMsg);
+        throw new DeploymentError(healthErr); // keep the HTTP response message brief
       }
 
       // ── Step 7: Switch traffic ─────────────────────────────────────────────

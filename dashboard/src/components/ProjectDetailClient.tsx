@@ -331,13 +331,7 @@ export function ProjectDetailClient() {
 
           {/* Error banner — shown when latest deployment failed */}
           {activeDeployment?.status === "FAILED" && activeDeployment.errorMessage && (
-            <div className="mb-5 flex items-start gap-3 rounded-lg bg-red-950/30 border border-red-800/40 px-4 py-3">
-              <span className="text-red-400 text-sm shrink-0 mt-0.5">✕</span>
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-red-400 mb-0.5">Deployment failed</p>
-                <p className="text-xs text-red-300/70 font-mono break-words">{activeDeployment.errorMessage}</p>
-              </div>
-            </div>
+            <DeployErrorBanner message={activeDeployment.errorMessage} />
           )}
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -680,6 +674,48 @@ export function ProjectDetailClient() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteOpen(false)}
       />
+    </div>
+  );
+}
+
+// ── Deploy Error Banner ───────────────────────────────────────────────────────
+
+function DeployErrorBanner({ message }: { message: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const sep = message.indexOf("\n\n--- Container output ---\n");
+  const summary = sep >= 0 ? message.slice(0, sep) : message;
+  const containerLog = sep >= 0 ? message.slice(sep + "\n\n--- Container output ---\n".length) : null;
+
+  return (
+    <div className="mb-5 rounded-lg bg-red-950/30 border border-red-800/40 overflow-hidden">
+      {/* Header row */}
+      <div className="flex items-center gap-3 px-4 py-3">
+        <span className="text-red-400 text-sm shrink-0">✕</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold text-red-400 mb-0.5">Deployment failed</p>
+          <p className="text-xs text-red-300/70 font-mono break-words">{summary}</p>
+        </div>
+        {containerLog && (
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className="shrink-0 text-xs text-red-500 hover:text-red-300 border border-red-800/60 rounded px-2 py-0.5 transition-colors"
+          >
+            {expanded ? "Hide logs" : "Show logs"}
+          </button>
+        )}
+      </div>
+
+      {/* Container output */}
+      {containerLog && expanded && (
+        <div className="border-t border-red-900/40 px-4 py-3">
+          <p className="text-[10px] font-semibold text-red-600 uppercase tracking-wider mb-2">
+            Container output
+          </p>
+          <pre className="text-xs text-red-200/60 font-mono whitespace-pre-wrap break-words max-h-64 overflow-y-auto leading-relaxed">
+            {containerLog}
+          </pre>
+        </div>
+      )}
     </div>
   );
 }
