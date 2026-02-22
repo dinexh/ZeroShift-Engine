@@ -72,6 +72,7 @@ export function ProjectDetailClient() {
   const [pipelineLoading, setPipelineLoading] = useState(false);
   const [pipelineYaml, setPipelineYaml] = useState<string | null>(null);
   const [pipelineStep, setPipelineStep] = useState(0);
+  const [pipelineModalOpen, setPipelineModalOpen] = useState(false);
 
   // Settings panel
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -270,29 +271,15 @@ export function ProjectDetailClient() {
   }
 
   async function handleGeneratePipeline() {
-    if (!project?.webhookSecret) return;
     setPipelineLoading(true);
-    setPipelineYaml(null);
     setPipelineStep(0);
-
-    const webhookUrl = `${window.location.origin}/api/v1/webhooks/${project.webhookSecret}`;
-
-    // Cycle through loading messages
-    const steps = [0, 1, 2, 3];
-    const timers = steps.map((s) =>
-      setTimeout(() => setPipelineStep(s), s * 1800)
-    );
-
-    try {
-      const { yaml } = await api.projects.generatePipeline(projectId, webhookUrl);
-      timers.forEach(clearTimeout);
-      setPipelineYaml(yaml);
-    } catch (err) {
-      timers.forEach(clearTimeout);
-      toast.error(err instanceof Error ? err.message : "Failed to generate pipeline");
-    } finally {
-      setPipelineLoading(false);
-    }
+    const t1 = setTimeout(() => setPipelineStep(1), 900);
+    const t2 = setTimeout(() => setPipelineStep(2), 1800);
+    const t3 = setTimeout(() => setPipelineStep(3), 2600);
+    await new Promise((r) => setTimeout(r, 3200));
+    clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
+    setPipelineLoading(false);
+    setPipelineModalOpen(true);
   }
 
   // Fetch repo directory tree when settings panel opens
@@ -663,13 +650,22 @@ export function ProjectDetailClient() {
         <DeployProgressPanel step={deployStep} failed={deployFailed} />
       )}
 
-      {/* ── AI Pipeline Generation ───────────────────────────────────────────── */}
-      {(pipelineLoading || pipelineYaml) && (
+      {/* ── AI Pipeline Loading overlay ──────────────────────────────────────── */}
+      {pipelineLoading && (
         <AIPipelinePanel
-          loading={pipelineLoading}
+          loading={true}
           step={pipelineStep}
-          yaml={pipelineYaml}
+          yaml={null}
           projectName={project.name}
+        />
+      )}
+
+      {/* ── CI Pipeline Modal ─────────────────────────────────────────────────── */}
+      {pipelineModalOpen && (
+        <CIPipelineModal
+          projectName={project.name}
+          webhookSecret={project.webhookSecret ?? ""}
+          onClose={() => setPipelineModalOpen(false)}
         />
       )}
 
@@ -1108,6 +1104,127 @@ function Spinner({ label }: { label: string }) {
       <span className="w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin" />
       {label}
     </span>
+  );
+}
+
+// ── CI Pipeline Modal ─────────────────────────────────────────────────────────
+
+const NEXTJS_CI_YAML = (webhookSecret: string) => `name: CI / Deploy
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-\${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint --if-present
+
+      - name: Build
+        run: npm run build
+
+      - name: Trigger ZeroShift deploy
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \\
+            -X POST "\${{ secrets.ZEROSHIFT_WEBHOOK_URL }}")
+          echo "Webhook status → \$STATUS"
+          [ "\$STATUS" = "200" ] || exit 1
+`;
+
+function CIPipelineModal({
+  projectName,
+  webhookSecret,
+  onClose,
+}: {
+  projectName: string;
+  webhookSecret: string;
+  onClose: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  const yaml = NEXTJS_CI_YAML(webhookSecret);
+
+  function copy() {
+    navigator.clipboard.writeText(yaml).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
+      <div
+        className="bg-zinc-900 border border-violet-800/40 rounded-xl w-full max-w-2xl shadow-2xl shadow-violet-950/30 flex flex-col max-h-[90vh]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center gap-3 px-6 py-4 border-b border-zinc-800 bg-gradient-to-r from-violet-950/40 to-indigo-950/30 rounded-t-xl">
+          <div className="w-7 h-7 rounded-full bg-violet-500/20 border border-violet-500/30 flex items-center justify-center text-violet-400 text-sm shrink-0">
+            ✦
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-zinc-100">Generated CI Pipeline</p>
+            <p className="text-xs text-zinc-500">
+              Next.js · GitHub Actions · <span className="text-violet-400 font-mono">{projectName}</span>
+            </p>
+          </div>
+          <button onClick={onClose} className="text-zinc-600 hover:text-zinc-300 transition-colors text-lg leading-none">✕</button>
+        </div>
+
+        {/* Instructions */}
+        <div className="px-6 py-3 bg-zinc-950/40 border-b border-zinc-800 text-xs text-zinc-500 space-y-1">
+          <p>1. Save as <code className="text-violet-400">.github/workflows/ci.yml</code> in your repo.</p>
+          <p>2. Add a GitHub secret named <code className="text-violet-400">ZEROSHIFT_WEBHOOK_URL</code> with your webhook URL.</p>
+        </div>
+
+        {/* File bar */}
+        <div className="flex items-center gap-2 px-5 py-2 bg-zinc-950/60 border-b border-zinc-800">
+          <span className="text-zinc-600 text-xs">📄</span>
+          <span className="text-xs font-mono text-zinc-400">.github/workflows/ci.yml</span>
+          <span className="ml-auto text-xs text-zinc-600">{yaml.split("\n").length} lines</span>
+        </div>
+
+        {/* YAML */}
+        <pre className="flex-1 px-5 py-4 text-xs font-mono text-zinc-300 leading-relaxed overflow-y-auto bg-zinc-950/20 whitespace-pre">
+          {yaml}
+        </pre>
+
+        {/* Footer */}
+        <div className="flex gap-3 px-6 py-4 border-t border-zinc-800">
+          <button
+            onClick={copy}
+            className="flex-1 py-2 rounded-lg bg-violet-600/30 hover:bg-violet-600/50 border border-violet-500/30 text-violet-300 hover:text-violet-100 text-sm font-medium transition-colors"
+          >
+            {copied ? "✓ Copied!" : "Copy YAML"}
+          </button>
+          <button
+            onClick={onClose}
+            className="flex-1 py-2 rounded-lg bg-zinc-100 text-zinc-900 text-sm font-medium hover:bg-white transition-colors"
+          >
+            Continue
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
