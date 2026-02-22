@@ -3,11 +3,10 @@ import { config } from "../config/env";
 import { parseProjectEnv } from "../utils/env";
 import { DeploymentRepository } from "../repositories/deployment.repository";
 import { ProjectRepository } from "../repositories/project.repository";
-import { buildImage, runContainer, stopContainer, removeContainer, getContainerLogs } from "../utils/docker";
+import { buildImage, runContainer, stopContainer, removeContainer } from "../utils/docker";
 import { ensureDockerfile } from "../utils/dockerfile";
 import { logger } from "../utils/logger";
 import { ConflictError, DeploymentError, NotFoundError } from "../utils/errors";
-import { ValidationService } from "./validation.service";
 import { TrafficService } from "./traffic.service";
 import { GitService } from "./git.service";
 
@@ -28,14 +27,12 @@ export class DeploymentService {
 
   private readonly repo: DeploymentRepository;
   private readonly projectRepo: ProjectRepository;
-  private readonly validation: ValidationService;
   private readonly traffic: TrafficService;
   private readonly git: GitService;
 
   constructor() {
     this.repo = new DeploymentRepository();
     this.projectRepo = new ProjectRepository();
-    this.validation = new ValidationService();
     this.traffic = new TrafficService();
     this.git = new GitService();
   }
@@ -48,10 +45,9 @@ export class DeploymentService {
    * 4. Build Docker image from source
    * 5. Determine color (BLUE/GREEN) and port
    * 6. Start new container
-   * 7. Validate health
-   * 8. Switch Nginx traffic
-   * 9. Mark new ACTIVE, retire old
-   * 10. Release lock (always — via finally)
+   * 7. Switch Nginx traffic
+   * 8. Mark new ACTIVE, retire old
+   * 9. Release lock (always — via finally)
    */
   async deploy(opts: DeployOptions): Promise<DeployResult> {
     const { projectId } = opts;
@@ -129,36 +125,16 @@ export class DeploymentService {
       );
       this.checkCancelled(projectId);
 
-      // ── Step 6: Validate ───────────────────────────────────────────────────
-      logger.info({ projectId, step: 6 }, "Validating new container");
-      const result = await this.validation.validate(
-        `http://localhost:${hostPort}`,
-        project.healthPath,
-        containerName
-      );
-
-      if (!result.success) {
-        const healthErr = result.error ?? "Health check failed";
-        // Capture container logs BEFORE stopping/removing so they aren't lost
-        const containerLogs = await getContainerLogs(containerName, 50);
-        const errMsg = containerLogs.length > 0
-          ? `${healthErr}\n\n--- Container output ---\n${containerLogs.join("\n")}`
-          : healthErr;
-        logger.error({ projectId, error: healthErr, containerLogs }, "Validation failed");
-        await this.cleanupFailedContainer(containerName, deployment.id, errMsg);
-        throw new DeploymentError(healthErr); // keep the HTTP response message brief
-      }
-
-      // ── Step 7: Switch traffic ─────────────────────────────────────────────
-      logger.info({ projectId, step: 7, hostPort }, "Switching traffic");
+      // ── Step 6: Switch traffic ─────────────────────────────────────────────
+      logger.info({ projectId, step: 6, hostPort }, "Switching traffic");
       await this.traffic.switchTrafficTo(hostPort);
 
-      // ── Step 8: Activate new, retire old ──────────────────────────────────
+      // ── Step 7: Activate new, retire old ──────────────────────────────────
       await this.repo.updateStatus(deployment.id, DeploymentStatus.ACTIVE);
 
       if (activeDeployment) {
         logger.info(
-          { projectId, step: 8, oldContainer: activeDeployment.containerName },
+          { projectId, step: 7, oldContainer: activeDeployment.containerName },
           "Stopping old container"
         );
         await stopContainer(activeDeployment.containerName).catch((err) => {
@@ -171,7 +147,7 @@ export class DeploymentService {
       }
 
       logger.info(
-        { projectId, deploymentId: deployment.id, containerName, latency: result.latency },
+        { projectId, deploymentId: deployment.id, containerName },
         "Deployment successful"
       );
 
@@ -246,18 +222,6 @@ export class DeploymentService {
     if (DeploymentService.cancelRequests.has(projectId)) {
       throw new DeploymentError("Cancelled by user");
     }
-  }
-
-  private async cleanupFailedContainer(
-    containerName: string,
-    deploymentId: string,
-    errorMessage?: string
-  ): Promise<void> {
-    await stopContainer(containerName).catch(() => null);
-    await removeContainer(containerName).catch(() => null);
-    await this.repo
-      .updateStatus(deploymentId, DeploymentStatus.FAILED, errorMessage)
-      .catch(() => null);
   }
 
   private acquireLock(projectId: string): boolean {

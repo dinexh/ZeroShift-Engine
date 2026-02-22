@@ -11,8 +11,11 @@ export async function buildImage(imageTag: string, contextPath: string): Promise
 
 /**
  * Starts a Docker container in detached mode.
- * Maps hostPort on the host to containerPort inside the container.
- * Injects each key-value pair in env as -e KEY=value arguments.
+ *
+ * Bridge/custom network: maps hostPort → containerPort via -p, adds host.docker.internal.
+ * Host network: shares host network stack (bypasses Docker NAT — fixes cloud DB connectivity).
+ *   - -p and --add-host are invalid/ignored with --network host
+ *   - PORT=<hostPort> is injected so the app listens on the right port for blue-green
  */
 export async function runContainer(
   name: string,
@@ -23,14 +26,29 @@ export async function runContainer(
   env: Record<string, string> = {}
 ): Promise<void> {
   logger.info({ name, imageTag, hostPort, containerPort, network }, "Starting Docker container");
-  const envArgs = Object.entries(env).flatMap(([key, value]) => ["-e", `${key}=${value}`]);
+  const isHostNetwork = network === "host";
+
+  // With host networking, inject PORT so the app listens on the correct blue/green port.
+  // User-supplied env can still override PORT if they need a fixed value.
+  const effectiveEnv = isHostNetwork && !("PORT" in env)
+    ? { PORT: String(hostPort), ...env }
+    : env;
+
+  const envArgs = Object.entries(effectiveEnv).flatMap(([key, value]) => ["-e", `${key}=${value}`]);
+
+  const networkArgs: string[] = isHostNetwork
+    ? ["--network", "host"]
+    : [
+        "--network", network,
+        "--add-host=host.docker.internal:host-gateway",
+        "-p", `${hostPort}:${containerPort}`,
+      ];
+
   await execFileAsync("docker", [
     "run",
     "-d",
     "--name", name,
-    "--network", network,
-    "--add-host=host.docker.internal:host-gateway",
-    "-p", `${hostPort}:${containerPort}`,
+    ...networkArgs,
     "--restart", "unless-stopped",
     ...envArgs,
     imageTag,
