@@ -55,6 +55,26 @@ export async function removeContainer(name: string): Promise<void> {
 }
 
 /**
+ * Kills and removes any containers currently bound to the given host port.
+ * This prevents "port already allocated" errors when a previous container
+ * (possibly with a different name) is still holding the port.
+ */
+export async function freeHostPort(hostPort: number): Promise<void> {
+  try {
+    const { stdout } = await execFileAsync("docker", [
+      "ps", "-q", "--filter", `publish=${hostPort}`,
+    ]);
+    const ids = stdout.trim().split("\n").filter(Boolean);
+    for (const id of ids) {
+      logger.warn({ hostPort, id }, "Freeing port — killing container holding it");
+      await execFileAsync("docker", ["rm", "-f", id]).catch(() => null);
+    }
+  } catch {
+    // no containers on that port
+  }
+}
+
+/**
  * Returns true if the container exists and is in a running state.
  */
 export async function inspectContainer(name: string): Promise<boolean> {
