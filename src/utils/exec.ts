@@ -33,10 +33,11 @@ export async function execFileAsync(cmd: string, args: string[]): Promise<ExecRe
     const { stdout, stderr } = await execFilePromise(cmd, args, { maxBuffer: 50 * 1024 * 1024 });
     return { stdout: stdout.toString(), stderr: stderr.toString() };
   } catch (err: unknown) {
-    // execFile errors carry .stderr with the actual output — include it in the message
+    // execFile errors carry .stdout/.stderr with the actual output — include both
     const errObj = err as NodeJS.ErrnoException & { stderr?: Buffer | string; stdout?: Buffer | string };
+    const stdout = errObj.stdout ? errObj.stdout.toString().trim() : "";
     const stderr = errObj.stderr ? errObj.stderr.toString().trim() : "";
-    const detail = stderr || (err instanceof Error ? err.message : String(err));
-    throw new Error(`Command failed: ${cmd} ${args.join(" ")}\n${detail}`);
+    const output = [stdout, stderr].filter(Boolean).join("\n") || (err instanceof Error ? err.message : String(err));
+    throw new Error(`Command failed: ${cmd} ${args.join(" ")}\n${output}`);
   }
 }
