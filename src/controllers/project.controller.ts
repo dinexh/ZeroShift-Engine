@@ -15,7 +15,6 @@ interface CreateProjectBody {
   buildContext?: string;
   appPort: number;
   healthPath?: string;
-  basePort: number;
   env?: Record<string, string>;
 }
 
@@ -39,12 +38,16 @@ export async function createProjectHandler(
   req: FastifyRequest<{ Body: CreateProjectBody }>,
   reply: FastifyReply
 ): Promise<void> {
-  const { name, repoUrl, branch = "main", buildContext = ".", appPort, healthPath = "/health", basePort, env = {} } = req.body;
+  const { name, repoUrl, branch = "main", buildContext = ".", appPort, healthPath = "/health", env = {} } = req.body;
 
   const envError = validateEnvObject(env);
   if (envError) {
     return reply.code(400).send({ error: "ValidationError", message: envError });
   }
+
+  // Auto-assign basePort: each project needs 2 consecutive ports (blue/green).
+  // Never reuse a port range already claimed by another project.
+  const basePort = await projectRepo.getNextBasePort();
 
   // localPath is auto-computed — set a placeholder before we have the id.
   // We create the project then update localPath with the generated id.
