@@ -26,6 +26,7 @@ const projectSchema = {
     appPort: { type: "number" },
     healthPath: { type: "string" },
     basePort: { type: "number" },
+    webhookSecret: { type: "string", nullable: true },
     env: envSchema,
     createdAt: { type: "string" },
     updatedAt: { type: "string" },
