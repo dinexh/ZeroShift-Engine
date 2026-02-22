@@ -292,11 +292,16 @@ export default function OverviewPage() {
               </div>
             ) : projects.length === 0 ? (
               <div
-                className="py-16 text-center cursor-pointer hover:bg-zinc-800/30 transition-colors"
+                className="py-20 text-center cursor-pointer hover:bg-zinc-800/20 transition-colors"
                 onClick={() => setCreateOpen(true)}
               >
-                <p className="text-sm text-zinc-500">No projects yet</p>
-                <p className="text-xs text-zinc-600 mt-1">Click to create your first project</p>
+                <div className="w-14 h-14 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl text-zinc-500">+</span>
+                </div>
+                <p className="text-sm font-medium text-zinc-400">No projects yet</p>
+                <p className="text-xs text-zinc-600 mt-1.5 max-w-[220px] mx-auto leading-relaxed">
+                  Create your first project to start zero-downtime deployments
+                </p>
               </div>
             ) : (
               <div className="divide-y divide-zinc-800">
@@ -387,6 +392,62 @@ export default function OverviewPage() {
             <div className="flex items-center justify-center py-2">
               <DeploymentsPerProjectChart projects={projects} deployments={allDeployments} />
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Recent Activity ───────────────────────────────────────────────────── */}
+      {allDeployments.length > 0 && (
+        <div className="mt-6 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800">
+            <span className="text-sm font-medium text-zinc-300">Recent Activity</span>
+            <span className="text-xs text-zinc-600 bg-zinc-800 px-2 py-0.5 rounded-full">
+              {Math.min(allDeployments.length, 8)} of {allDeployments.length}
+            </span>
+          </div>
+          <div className="divide-y divide-zinc-800/60">
+            {allDeployments.slice(0, 8).map((d) => {
+              const proj = projects.find(p => p.id === d.projectId);
+              const icon =
+                d.status === "ACTIVE"      ? "↑" :
+                d.status === "FAILED"      ? "✕" :
+                d.status === "ROLLED_BACK" ? "⟳" :
+                d.status === "DEPLOYING"   ? "◌" : "·";
+              const iconColor =
+                d.status === "ACTIVE"      ? "text-emerald-400" :
+                d.status === "FAILED"      ? "text-red-400" :
+                d.status === "ROLLED_BACK" ? "text-zinc-500" :
+                d.status === "DEPLOYING"   ? "text-amber-400" : "text-zinc-600";
+              const action =
+                d.status === "ACTIVE"      ? "deployed" :
+                d.status === "FAILED"      ? "failed" :
+                d.status === "ROLLED_BACK" ? "rolled back" :
+                d.status === "DEPLOYING"   ? "deploying" : d.status.toLowerCase();
+              return (
+                <div key={d.id} className="flex items-center gap-3 px-5 py-3 hover:bg-zinc-800/30 transition-colors">
+                  <span className={`text-sm font-mono shrink-0 w-4 text-center ${iconColor}`}>{icon}</span>
+                  <div className="w-7 h-7 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase">
+                      {(proj?.name ?? "??").slice(0, 2)}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs truncate">
+                      <span className="text-zinc-200 font-medium">{proj?.name ?? d.projectId.slice(0, 8)}</span>
+                      <span className="text-zinc-500"> {action} </span>
+                      <span className="text-zinc-400 font-mono">v{d.version}</span>
+                      <span className={`ml-1.5 font-mono text-[10px] ${d.color === "BLUE" ? "text-blue-400" : "text-emerald-400"}`}>
+                        {d.color}
+                      </span>
+                    </p>
+                  </div>
+                  <div className="shrink-0 flex items-center gap-2.5">
+                    <StatusBadge status={d.status} />
+                    <span className="text-[10px] text-zinc-600 min-w-[40px] text-right">{timeAgo(d.updatedAt)}</span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

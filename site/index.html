@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ZeroShift Engine — Zero-Downtime Deployments</title>
   <meta name="description" content="Self-hosted blue-green deployment engine. Push to GitHub, ZeroShift handles the rest." />
+  <meta property="og:title" content="ZeroShift Engine — Zero-Downtime Deployments" />
+  <meta property="og:description" content="Self-hosted blue-green deployment engine. Push to GitHub, ZeroShift handles the rest. No cloud lock-in." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="ZeroShift Engine — Zero-Downtime Deployments" />
+  <meta name="twitter:description" content="Self-hosted blue-green deployment engine. Zero downtime. Own your infra." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
@@ -725,6 +731,258 @@
       color: var(--text2);
     }
 
+    /* ── NAV ─────────────────────────────────────────────────────────────────── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10,10,10,0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 48px;
+      height: 56px;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .nav-logo-icon {
+      width: 22px;
+      height: 22px;
+      background: var(--text);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--bg);
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 13px;
+      color: var(--muted);
+      padding: 5px 12px;
+      border-radius: 4px;
+      transition: color 0.15s, background 0.15s;
+    }
+    .nav-links a:hover { color: var(--text); background: var(--bg2); }
+    .nav-gh {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 6px 14px;
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      color: var(--text2);
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    .nav-gh:hover { border-color: var(--text2); color: var(--text); background: var(--bg2); }
+
+    /* ── MOCK BROWSER (dashboard preview) ────────────────────────────────────── */
+    .preview-section { max-width: 960px; margin: 0 auto; padding: 72px 48px 0; }
+    .mock-browser {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+    }
+    .mock-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 11px 16px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+    }
+    .mock-url {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      margin-left: 8px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      padding: 2px 10px;
+      border-radius: 4px;
+    }
+    .mock-body {
+      display: flex;
+      height: 300px;
+      background: var(--bg);
+      overflow: hidden;
+    }
+    .mock-sidebar {
+      width: 160px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      padding: 12px;
+      background: #050505;
+    }
+    .mock-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+    .mock-logo-icon {
+      width: 16px; height: 16px;
+      background: var(--text);
+      border-radius: 2px;
+      font-size: 8px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--bg);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .mock-logo-text { font-size: 11px; font-weight: 600; color: var(--text2); }
+    .mock-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+    .mock-nav-item.active { background: #1f1f1f; color: var(--text); }
+    .mock-main { flex: 1; padding: 16px; overflow: hidden; }
+    .mock-stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+    .mock-stat-card {
+      background: #111;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .mock-stat-num { font-size: 22px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    .mock-stat-label { font-size: 10px; color: var(--muted); margin-top: 3px; }
+    .mock-projects { background: #111; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .mock-proj-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--text2);
+      font-weight: 500;
+    }
+    .mock-proj-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .mock-avatar {
+      width: 22px; height: 22px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      font-size: 8px;
+      font-weight: 700;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .mock-proj-name { font-size: 11px; color: var(--text); font-weight: 500; flex: 1; }
+    .mock-proj-sub { font-size: 9px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+    .mock-badge {
+      font-size: 9px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+    .mock-badge-green { background: #22c55e18; color: #22c55e; border: 1px solid #22c55e30; }
+    .mock-badge-blue  { background: #3b82f618; color: #3b82f6; border: 1px solid #3b82f630; }
+    .mock-pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+    .mock-footer {
+      border-top: 1px solid var(--border);
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .mock-online-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
+    .mock-online-txt { font-size: 9px; color: #22c55e; font-weight: 500; }
+
+    /* ── COMPARISON TABLE ────────────────────────────────────────────────────── */
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      font-size: 13px;
+    }
+    .compare-table th {
+      text-align: center;
+      padding: 12px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      color: var(--text2);
+    }
+    .compare-table th:first-child { text-align: left; color: var(--muted); }
+    .compare-table th.hl { color: var(--green); }
+    .compare-table td {
+      padding: 11px 16px;
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+      color: var(--text2);
+    }
+    .compare-table tr:last-child td { border-bottom: none; }
+    .compare-table td:first-child { text-align: left; color: var(--text2); font-weight: 500; }
+    .compare-table td.hl { background: #22c55e06; }
+    .cyes { color: var(--green); font-weight: 600; }
+    .cno  { color: #444; }
+    .cpart { color: #f59e0b; font-size: 12px; }
+
+    /* ── SCROLL REVEAL ───────────────────────────────────────────────────────── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.55s ease, transform 0.55s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── TERMINAL REPLAY ─────────────────────────────────────────────────────── */
+    .replay-btn {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      background: none;
+      border: 1px solid var(--border2);
+      border-radius: 3px;
+      padding: 2px 8px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      margin-left: auto;
+    }
+    .replay-btn:hover { color: var(--green); border-color: #22c55e44; }
+
     @media (max-width: 768px) {
       nav { padding: 0 20px; }
       .nav-links { display: none; }
@@ -741,6 +999,21 @@
   </style>
 </head>
 <body>
+
+<!-- ── NAV ──────────────────────────────────────────────────────────────────── -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-icon">Z</div>
+    ZeroShift Engine
+  </a>
+  <ul class="nav-links">
+    <li><a href="#how-it-works">How it works</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#setup">Setup</a></li>
+    <li><a href="#api">API</a></li>
+  </ul>
+  <a href="https://github.com/dinexh/ZeroShift-Engine" target="_blank" class="nav-gh">GitHub ↗</a>
+</nav>
 
 <!-- ── HERO ─────────────────────────────────────────────────────────────────── -->
 <div class="hero">
@@ -765,6 +1038,7 @@
       <div class="dot dot-yellow"></div>
       <div class="dot dot-green"></div>
       <span class="terminal-title">zeroshift — deploy log</span>
+      <button class="replay-btn" id="replay-btn" onclick="replayTerminal()">replay</button>
     </div>
     <div class="terminal-body" id="terminal-body">
       <span class="cursor" id="cursor"></span>
@@ -792,8 +1066,95 @@
   </div>
 </div>
 
+<!-- ── DASHBOARD PREVIEW ─────────────────────────────────────────────────────── -->
+<div class="preview-section reveal">
+  <p class="section-label">// dashboard</p>
+  <h2 style="margin-bottom:32px;">Everything in one view.</h2>
+  <div class="mock-browser">
+    <div class="mock-bar">
+      <div class="dot dot-red"></div>
+      <div class="dot dot-yellow"></div>
+      <div class="dot dot-green"></div>
+      <span class="mock-url">localhost:9090</span>
+    </div>
+    <div class="mock-body">
+      <!-- Sidebar -->
+      <div class="mock-sidebar">
+        <div class="mock-logo">
+          <div class="mock-logo-icon">Z</div>
+          <span class="mock-logo-text">ZeroShift</span>
+        </div>
+        <div class="mock-nav-item active">◈ &nbsp;Overview</div>
+        <div class="mock-nav-item">⟳ &nbsp;Deployments</div>
+        <div class="mock-nav-item">▣ &nbsp;Server</div>
+        <div class="mock-footer" style="position:absolute;bottom:0;width:148px;">
+          <div class="mock-online-dot"></div>
+          <span class="mock-online-txt">Engine online</span>
+        </div>
+      </div>
+      <!-- Main content -->
+      <div class="mock-main">
+        <div class="mock-stats-row">
+          <div class="mock-stat-card">
+            <div class="mock-stat-num" style="color:#ededed;">4</div>
+            <div class="mock-stat-label">Projects</div>
+          </div>
+          <div class="mock-stat-card">
+            <div class="mock-stat-num" style="color:#34d399;">4</div>
+            <div class="mock-stat-label">Running</div>
+          </div>
+          <div class="mock-stat-card">
+            <div class="mock-stat-num" style="color:#52525b;">0</div>
+            <div class="mock-stat-label">Failed</div>
+          </div>
+          <div class="mock-stat-card">
+            <div class="mock-stat-num" style="color:#52525b;">0</div>
+            <div class="mock-stat-label">Deploying</div>
+          </div>
+        </div>
+        <div class="mock-projects">
+          <div class="mock-proj-header">
+            <span>Projects <span style="color:var(--muted);font-weight:400;">4</span></span>
+            <span style="color:var(--muted);font-size:10px;border:1px solid var(--border2);padding:2px 8px;border-radius:4px;">+ New</span>
+          </div>
+          <div class="mock-proj-row">
+            <div class="mock-avatar">SP</div>
+            <div style="flex:1;min-width:0;">
+              <div class="mock-proj-name">speedtype</div>
+              <div class="mock-proj-sub">nithin2k5/speedtyper.git</div>
+            </div>
+            <span style="font-size:9px;color:var(--muted);margin-right:8px;">v2 · 1h ago</span>
+            <span class="mock-badge mock-badge-green">ACTIVE</span>
+            <div class="mock-pulse" style="margin-left:5px;"></div>
+          </div>
+          <div class="mock-proj-row">
+            <div class="mock-avatar">NI</div>
+            <div style="flex:1;min-width:0;">
+              <div class="mock-proj-name">nithin</div>
+              <div class="mock-proj-sub">nithin2k5/Portfolio</div>
+            </div>
+            <span style="font-size:9px;color:var(--muted);margin-right:8px;">v3 · 2h ago</span>
+            <span class="mock-badge mock-badge-green">ACTIVE</span>
+            <div class="mock-pulse" style="margin-left:5px;"></div>
+          </div>
+          <div class="mock-proj-row">
+            <div class="mock-avatar">MO</div>
+            <div style="flex:1;min-width:0;">
+              <div class="mock-proj-name">monix</div>
+              <div class="mock-proj-sub">dinexh/monix.git</div>
+            </div>
+            <span style="font-size:9px;color:var(--muted);margin-right:8px;">v4 · 3h ago</span>
+            <span class="mock-badge mock-badge-green">ACTIVE</span>
+            <div class="mock-pulse" style="margin-left:5px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ── HOW IT WORKS ──────────────────────────────────────────────────────────── -->
-<section id="how-it-works">
+<section id="how-it-works" class="reveal">
   <p class="section-label">// how it works</p>
   <h2>Push. Build. Switch. Done.</h2>
   <p class="section-sub">Every deploy targets the idle container slot. The live app is never touched until the new one is healthy.</p>
@@ -939,7 +1300,7 @@
 <hr class="full-divider" />
 
 <!-- ── FEATURES ──────────────────────────────────────────────────────────────── -->
-<section id="features">
+<section id="features" class="reveal">
   <p class="section-label">// features</p>
   <h2>Everything you need.<br/>Nothing you don't.</h2>
   <p class="section-sub">Built for real deployments on real hardware, not abstract cloud primitives.</p>
@@ -995,8 +1356,94 @@
 
 <hr class="full-divider" />
 
+<!-- ── COMPARISON ────────────────────────────────────────────────────────────── -->
+<section id="compare" class="reveal">
+  <p class="section-label">// why zeroshift</p>
+  <h2>Simple, self-hosted, yours.</h2>
+  <p class="section-sub">No vendor lock-in. No monthly bill for a deployment tool. Just your server, running your code.</p>
+
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th class="hl">ZeroShift</th>
+        <th>Heroku / Render</th>
+        <th>Kubernetes</th>
+        <th>Raw Docker</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Zero-downtime deploys</td>
+        <td class="hl"><span class="cyes">✓</span></td>
+        <td><span class="cyes">✓</span></td>
+        <td><span class="cyes">✓</span></td>
+        <td><span class="cno">✗</span></td>
+      </tr>
+      <tr>
+        <td>Self-hosted</td>
+        <td class="hl"><span class="cyes">✓</span></td>
+        <td><span class="cno">✗</span></td>
+        <td><span class="cyes">✓</span></td>
+        <td><span class="cyes">✓</span></td>
+      </tr>
+      <tr>
+        <td>No cloud fees</td>
+        <td class="hl"><span class="cyes">✓</span></td>
+        <td><span class="cno">✗</span></td>
+        <td><span class="cpart">depends</span></td>
+        <td><span class="cyes">✓</span></td>
+      </tr>
+      <tr>
+        <td>Dashboard UI</td>
+        <td class="hl"><span class="cyes">✓</span></td>
+        <td><span class="cyes">✓</span></td>
+        <td><span class="cpart">3rd party</span></td>
+        <td><span class="cno">✗</span></td>
+      </tr>
+      <tr>
+        <td>One-click rollback</td>
+        <td class="hl"><span class="cyes">✓</span></td>
+        <td><span class="cpart">limited</span></td>
+        <td><span class="cyes">✓</span></td>
+        <td><span class="cno">✗</span></td>
+      </tr>
+      <tr>
+        <td>Git-native workflow</td>
+        <td class="hl"><span class="cyes">✓</span></td>
+        <td><span class="cyes">✓</span></td>
+        <td><span class="cpart">via CI</span></td>
+        <td><span class="cno">✗</span></td>
+      </tr>
+      <tr>
+        <td>AI CI pipeline gen</td>
+        <td class="hl"><span class="cyes">✓</span></td>
+        <td><span class="cno">✗</span></td>
+        <td><span class="cno">✗</span></td>
+        <td><span class="cno">✗</span></td>
+      </tr>
+      <tr>
+        <td>Setup complexity</td>
+        <td class="hl"><span class="cyes">Low</span></td>
+        <td><span class="cyes">Low</span></td>
+        <td><span class="cno">High</span></td>
+        <td><span class="cpart">Medium</span></td>
+      </tr>
+      <tr>
+        <td>Open source</td>
+        <td class="hl"><span class="cyes">✓</span></td>
+        <td><span class="cno">✗</span></td>
+        <td><span class="cyes">✓</span></td>
+        <td><span class="cyes">✓</span></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<hr class="full-divider" />
+
 <!-- ── SETUP ─────────────────────────────────────────────────────────────────── -->
-<section id="setup">
+<section id="setup" class="reveal">
   <p class="section-label">// setup</p>
   <h2>Local setup in 6 steps.</h2>
   <p class="section-sub">Requires Bun, Docker, Nginx, and a PostgreSQL database (Neon free tier works).</p>
@@ -1151,7 +1598,7 @@
 <hr class="full-divider" />
 
 <!-- ── API ───────────────────────────────────────────────────────────────────── -->
-<section id="api">
+<section id="api" class="reveal">
   <p class="section-label">// api reference</p>
   <h2>REST API</h2>
   <p class="section-sub">All endpoints are prefixed with <code>/api/v1</code>. Responses are JSON.</p>
@@ -1197,9 +1644,14 @@
 <footer>
   <div class="footer-left">
     <strong>ZeroShift Engine</strong> — self-hosted, zero-downtime deployments
+    <div style="margin-top:6px;font-size:11px;color:var(--muted);">
+      Built with Bun · Fastify · Prisma · Docker · Nginx · Next.js
+    </div>
   </div>
   <ul class="footer-links">
-    <li><a href="https://github.com/dinexh/ZeroShift-Engine" target="_blank">GitHub</a></li>
+    <li><a href="https://github.com/dinexh/ZeroShift-Engine" target="_blank">GitHub ↗</a></li>
+    <li><a href="#how-it-works">How it works</a></li>
+    <li><a href="#features">Features</a></li>
     <li><a href="#setup">Setup</a></li>
     <li><a href="#api">API</a></li>
   </ul>
@@ -1334,6 +1786,29 @@
 
   // Init blue-green
   document.getElementById('pill-blue').classList.add('show');
+
+  // ── TERMINAL REPLAY ─────────────────────────────────────────────────────────
+  function replayTerminal() {
+    // Remove all rendered lines (keep cursor)
+    const allLines = body.querySelectorAll('.term-line');
+    allLines.forEach(el => el.remove());
+    // Reset state and restart
+    li = 0; ci = 0; currentEl = null;
+    body.appendChild(cursor);
+    setTimeout(tick, 300);
+  }
+
+  // ── SCROLL REVEAL ────────────────────────────────────────────────────────────
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08 });
+
+  document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
 
   // ── COPY BUTTONS ────────────────────────────────────────────────────────────
   function copyCode(btn) {

@@ -358,6 +358,11 @@ export function ProjectDetailClient() {
   const isDeploying = activeDeployment?.status === "DEPLOYING";
   const containerRunning = metrics?.running ?? activeDeployment?.status === "ACTIVE";
 
+  const successCount = deploymentHistory.filter(d => d.status === "ACTIVE" || d.status === "ROLLED_BACK").length;
+  const failedCount  = deploymentHistory.filter(d => d.status === "FAILED").length;
+  const totalFinished = successCount + failedCount;
+  const successRate = totalFinished > 0 ? Math.round((successCount / totalFinished) * 100) : null;
+
   return (
     <div className="space-y-6">
       {/* Breadcrumb */}
@@ -415,6 +420,20 @@ export function ProjectDetailClient() {
             </Stat>
             <Stat label="Health path">
               <span className="text-sm font-mono text-zinc-300">{project.healthPath}</span>
+            </Stat>
+            <Stat label="Success rate">
+              <span className={`text-sm font-medium ${
+                successRate === null ? "text-zinc-600" :
+                successRate >= 80    ? "text-emerald-400" :
+                successRate >= 50    ? "text-amber-400"   : "text-red-400"
+              }`}>
+                {successRate === null ? "—" : `${successRate}%`}
+                {successRate !== null && (
+                  <span className="text-xs text-zinc-600 font-normal ml-1.5">
+                    ({successCount}/{totalFinished})
+                  </span>
+                )}
+              </span>
             </Stat>
           </div>
 
@@ -677,6 +696,15 @@ export function ProjectDetailClient() {
             base port {project.basePort} · {project.basePort + 1}
           </span>
         </div>
+
+        {deploymentHistory.length === 0 && (
+          <div className="mb-4 rounded-xl border border-dashed border-zinc-700 bg-zinc-950 px-6 py-8 text-center">
+            <p className="text-sm font-medium text-zinc-400 mb-1">No deployments yet</p>
+            <p className="text-xs text-zinc-600 leading-relaxed">
+              Hit <span className="text-zinc-400 font-medium">Deploy</span> above to run the first deployment for this project.
+            </p>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <DeploymentSlot

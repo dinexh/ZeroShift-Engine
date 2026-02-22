@@ -51,8 +51,14 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="px-5 py-4 border-t border-zinc-800">
-        <p className="text-[10px] text-zinc-700">ZeroShift Engine</p>
-        <p className="text-[10px] text-zinc-700 mt-0.5">Zero-downtime deployments</p>
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+          </span>
+          <p className="text-[10px] text-emerald-500 font-medium">Engine online</p>
+        </div>
+        <p className="text-[10px] text-zinc-700">Zero-downtime deployments</p>
       </div>
     </aside>
   );
