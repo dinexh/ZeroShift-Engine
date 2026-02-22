@@ -11,11 +11,9 @@ export async function buildImage(imageTag: string, contextPath: string): Promise
 
 /**
  * Starts a Docker container in detached mode.
- *
- * Bridge/custom network: maps hostPort → containerPort via -p, adds host.docker.internal.
- * Host network: shares host network stack (bypasses Docker NAT — fixes cloud DB connectivity).
- *   - -p and --add-host are invalid/ignored with --network host
- *   - PORT=<hostPort> is injected so the app listens on the right port for blue-green
+ * Maps hostPort on the host to containerPort inside the container.
+ * This means apps with hardcoded ports work fine — the app listens on its
+ * native containerPort, and the host exposes it on hostPort for blue/green routing.
  */
 export async function runContainer(
   name: string,
@@ -26,29 +24,14 @@ export async function runContainer(
   env: Record<string, string> = {}
 ): Promise<void> {
   logger.info({ name, imageTag, hostPort, containerPort, network }, "Starting Docker container");
-  const isHostNetwork = network === "host";
-
-  // With host networking, inject PORT so the app listens on the correct blue/green port.
-  // User-supplied env can still override PORT if they need a fixed value.
-  const effectiveEnv = isHostNetwork && !("PORT" in env)
-    ? { PORT: String(hostPort), ...env }
-    : env;
-
-  const envArgs = Object.entries(effectiveEnv).flatMap(([key, value]) => ["-e", `${key}=${value}`]);
-
-  const networkArgs: string[] = isHostNetwork
-    ? ["--network", "host"]
-    : [
-        "--network", network,
-        "--add-host=host.docker.internal:host-gateway",
-        "-p", `${hostPort}:${containerPort}`,
-      ];
-
+  const envArgs = Object.entries(env).flatMap(([key, value]) => ["-e", `${key}=${value}`]);
   await execFileAsync("docker", [
     "run",
     "-d",
     "--name", name,
-    ...networkArgs,
+    "--network", network,
+    "--add-host=host.docker.internal:host-gateway",
+    "-p", `${hostPort}:${containerPort}`,
     "--restart", "unless-stopped",
     ...envArgs,
     imageTag,
