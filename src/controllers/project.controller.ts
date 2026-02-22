@@ -154,28 +154,45 @@ Rules:
 - Use concurrency group to cancel in-progress runs on the same branch
 - Output ONLY the raw YAML. No markdown, no code fences, no commentary.`;
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 2048 },
-      }),
-    }
-  );
-
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Gemini error: ${errText}`);
+  let geminiRes: Response;
+  try {
+    geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.2, maxOutputTokens: 2048 },
+        }),
+      }
+    );
+  } catch (netErr) {
+    logger.error({ err: netErr }, "generatePipeline: network error reaching Gemini API");
+    return reply.code(502).send({ error: "GatewayError", message: "Could not reach Gemini API — check server internet access" });
   }
 
-  const data = await res.json() as {
-    candidates: { content: { parts: { text: string }[] } }[];
-  };
-  const yaml = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
+  if (!geminiRes.ok) {
+    const errText = await geminiRes.text().catch(() => "");
+    logger.error({ status: geminiRes.status, body: errText }, "generatePipeline: Gemini API returned error");
+    return reply.code(502).send({ error: "GeminiError", message: `Gemini returned ${geminiRes.status}: ${errText.slice(0, 200)}` });
+  }
 
+  let data: { candidates?: { content?: { parts?: { text?: string }[] } }[] };
+  try {
+    data = await geminiRes.json() as typeof data;
+  } catch (parseErr) {
+    logger.error({ err: parseErr }, "generatePipeline: failed to parse Gemini response");
+    return reply.code(502).send({ error: "ParseError", message: "Invalid response from Gemini API" });
+  }
+
+  const yaml = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
+  if (!yaml) {
+    logger.error({ data }, "generatePipeline: empty YAML from Gemini");
+    return reply.code(502).send({ error: "EmptyResponse", message: "Gemini returned an empty response" });
+  }
+
+  logger.info({ projectId: project.id, lines: yaml.split("\n").length }, "generatePipeline: YAML generated");
   reply.code(200).send({ yaml });
 }
 
