@@ -2,47 +2,45 @@ import fs from "fs/promises";
 import path from "path";
 import { logger } from "./logger";
 
+// Marker written into auto-generated Dockerfiles so we know to regenerate them
+// on the next deploy. User-provided Dockerfiles won't have this line.
+const AUTO_GENERATED_MARKER = "# ZeroShift:auto-generated";
+
 /**
  * Ensures a Dockerfile exists in the given build context directory.
- * If one already exists it is left untouched.
- * Otherwise the project type is auto-detected and a Dockerfile is generated.
  *
- * Detection order: buildContextDir first, then repoRootDir (fallback).
- * This handles the common case where the user set a subdirectory as buildContext
- * but package.json lives at the repo root.
+ * - If a Dockerfile exists WITHOUT the auto-generated marker → user's own file, leave it.
+ * - If a Dockerfile exists WITH the marker → stale auto-generated, regenerate it.
+ * - If no Dockerfile → generate one.
  *
- * Returns the directory where the Dockerfile was written (may be repoRootDir
- * if the fallback was used) — callers should use this as the Docker build context.
- *
- * Currently supported runtimes (detected in order):
- *   1. Node.js  — package.json present
- *   2. Python   — requirements.txt present
- *   3. Go       — go.mod present
- *
- * Throws if the project type cannot be detected in either directory.
+ * Detection order: buildContextDir first, then repoRootDir, then immediate subdirs.
+ * Returns the directory where the Dockerfile was written.
  */
 export async function ensureDockerfile(
   buildContextDir: string,
   appPort: number,
   repoRootDir?: string
 ): Promise<string> {
-  // If a Dockerfile already exists in the build context, use it as-is.
   const dockerfilePath = path.join(buildContextDir, "Dockerfile");
+
   try {
-    await fs.access(dockerfilePath);
-    logger.info({ buildContextDir }, "Dockerfile found — skipping generation");
-    return buildContextDir;
+    const existing = await fs.readFile(dockerfilePath, "utf-8");
+    if (!existing.startsWith(AUTO_GENERATED_MARKER)) {
+      // User's own Dockerfile — respect it
+      logger.info({ buildContextDir }, "Dockerfile found — skipping generation");
+      return buildContextDir;
+    }
+    // Auto-generated from a previous deploy — fall through to regenerate
+    logger.info({ buildContextDir }, "Stale auto-generated Dockerfile detected — regenerating");
   } catch {
-    // Does not exist — generate one
+    // No Dockerfile — generate one
   }
 
-  // Build candidate list: specified buildContext → repo root → immediate subdirs of repo root.
+  // Build candidate list: specified buildContext → repo root → immediate subdirs.
   const root = repoRootDir ?? buildContextDir;
   const dirsToTry: string[] = [buildContextDir];
   if (root !== buildContextDir) dirsToTry.push(root);
 
-  // Scan one level of subdirectories of the repo root as a final fallback.
-  // This handles repos where the app lives inside e.g. `backend/` or `url-shortener/`.
   try {
     const entries = await fs.readdir(root, { withFileTypes: true });
     const subdirs = entries
@@ -113,26 +111,29 @@ async function buildNodeDockerfile(
 ): Promise<string> {
   const scripts = (pkg.scripts ?? {}) as Record<string, string>;
   const hasBuild = Boolean(scripts.build);
+  const startScript = scripts.start ?? "";
+  const buildScript = scripts.build ?? "";
 
-  // Detect package manager from lock file
+  // Check if start/build scripts explicitly call bun — strongest signal
+  const scriptUsesBun = /\bbun\b/.test(startScript) || /\bbun\b/.test(buildScript);
+  if (scriptUsesBun) {
+    return buildBunDockerfile(appPort, hasBuild);
+  }
+
+  // Fall back to lock file detection
   const hasBunLock  = await fileExists(repoDir, "bun.lockb");
   const hasYarnLock = await fileExists(repoDir, "yarn.lock");
   const hasPnpmLock = await fileExists(repoDir, "pnpm-lock.yaml");
 
-  if (hasBunLock) {
-    return buildBunDockerfile(appPort, hasBuild);
-  }
-  if (hasYarnLock) {
-    return buildYarnDockerfile(appPort, hasBuild);
-  }
-  if (hasPnpmLock) {
-    return buildPnpmDockerfile(appPort, hasBuild);
-  }
+  if (hasBunLock)  return buildBunDockerfile(appPort, hasBuild);
+  if (hasYarnLock) return buildYarnDockerfile(appPort, hasBuild);
+  if (hasPnpmLock) return buildPnpmDockerfile(appPort, hasBuild);
   return buildNpmDockerfile(appPort, hasBuild);
 }
 
 function buildNpmDockerfile(appPort: number, hasBuild: boolean): string {
   return lines([
+    AUTO_GENERATED_MARKER,
     "FROM node:20-alpine",
     "",
     "WORKDIR /app",
@@ -151,6 +152,7 @@ function buildNpmDockerfile(appPort: number, hasBuild: boolean): string {
 
 function buildYarnDockerfile(appPort: number, hasBuild: boolean): string {
   return lines([
+    AUTO_GENERATED_MARKER,
     "FROM node:20-alpine",
     "",
     "WORKDIR /app",
@@ -169,6 +171,7 @@ function buildYarnDockerfile(appPort: number, hasBuild: boolean): string {
 
 function buildPnpmDockerfile(appPort: number, hasBuild: boolean): string {
   return lines([
+    AUTO_GENERATED_MARKER,
     "FROM node:20-alpine",
     "",
     "RUN npm install -g pnpm",
@@ -189,12 +192,13 @@ function buildPnpmDockerfile(appPort: number, hasBuild: boolean): string {
 
 function buildBunDockerfile(appPort: number, hasBuild: boolean): string {
   return lines([
+    AUTO_GENERATED_MARKER,
     "FROM oven/bun:alpine",
     "",
     "WORKDIR /app",
     "",
-    "COPY package.json bun.lockb ./",
-    "RUN bun install --frozen-lockfile",
+    "COPY package.json bun.lockb* ./",
+    "RUN bun install",
     "",
     "COPY . .",
     "",
@@ -209,6 +213,7 @@ function buildBunDockerfile(appPort: number, hasBuild: boolean): string {
 
 function buildPythonDockerfile(appPort: number): string {
   return lines([
+    AUTO_GENERATED_MARKER,
     "FROM python:3.11-slim",
     "",
     "WORKDIR /app",
@@ -228,6 +233,7 @@ function buildPythonDockerfile(appPort: number): string {
 
 function buildGoDockerfile(appPort: number): string {
   return lines([
+    AUTO_GENERATED_MARKER,
     "FROM golang:1.22-alpine AS builder",
     "WORKDIR /app",
     "COPY go.mod go.sum ./",
