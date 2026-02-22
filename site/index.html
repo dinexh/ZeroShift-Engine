@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ZeroShift Engine — Zero-Downtime Deployments</title>
+  <meta name="description" content="Self-hosted blue-green deployment engine. Push to GitHub, ZeroShift handles the rest." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0a0a0a;
+      --bg2:      #111111;
+      --bg3:      #181818;
+      --bg4:      #141414;
+      --border:   #262626;
+      --border2:  #2e2e2e;
+      --text:     #ededed;
+      --text2:    #a1a1a1;
+      --muted:    #666666;
+      --green:    #22c55e;
+      --blue:     #3b82f6;
+      --red:      #ef4444;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    code, pre, .mono {
+      font-family: 'JetBrains Mono', 'Fira Code', Menlo, Monaco, Consolas, monospace;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* ── NAV ─────────────────────────────────────────────────────────────────── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10,10,10,0.92);
+      backdrop-filter: blur(12px);
+      padding: 0 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 52px;
+    }
+
+    .nav-logo {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-logo span { color: var(--green); }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 13px;
+      color: var(--text2);
+      transition: color 0.15s;
+    }
+
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-cta {
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 16px;
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      color: var(--text);
+      background: var(--bg2);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .nav-cta:hover { background: var(--bg3); border-color: var(--text2); }
+
+    /* ── HERO ────────────────────────────────────────────────────────────────── */
+    .hero {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 96px 48px 72px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--green);
+      border: 1px solid #22c55e22;
+      background: #22c55e0a;
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 28px;
+    }
+
+    .badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      margin-bottom: 20px;
+      max-width: 680px;
+    }
+
+    h1 em {
+      font-style: normal;
+      color: var(--green);
+    }
+
+    .hero-sub {
+      font-size: 1.05rem;
+      color: var(--text2);
+      max-width: 520px;
+      margin-bottom: 36px;
+      line-height: 1.7;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 64px;
+    }
+
+    .btn-primary {
+      font-size: 13px;
+      font-weight: 600;
+      padding: 9px 20px;
+      background: var(--text);
+      color: var(--bg);
+      border: 1px solid var(--text);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    .btn-ghost {
+      font-size: 13px;
+      font-weight: 500;
+      padding: 9px 20px;
+      background: transparent;
+      color: var(--text2);
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+    }
+
+    .btn-ghost:hover { background: var(--bg2); color: var(--text); border-color: var(--text2); transform: translateY(-1px); }
+
+    /* ── TERMINAL ────────────────────────────────────────────────────────────── */
+    .terminal {
+      background: var(--bg4);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .terminal-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 11px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+    }
+
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-red   { background: #ef4444; }
+    .dot-yellow{ background: #eab308; }
+    .dot-green { background: #22c55e; }
+
+    .terminal-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+      margin-left: 8px;
+    }
+
+    .terminal-body {
+      padding: 20px 24px;
+      min-height: 260px;
+    }
+
+    .term-line {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.8;
+      display: none;
+      white-space: pre;
+    }
+
+    .term-line.visible { display: block; }
+    .term-prompt { color: var(--green); }
+    .term-cmd { color: var(--text); }
+    .term-ok { color: var(--green); }
+    .term-info { color: #3b82f6; }
+    .term-muted { color: var(--muted); }
+
+    .cursor {
+      display: inline-block;
+      width: 7px;
+      height: 14px;
+      background: var(--green);
+      vertical-align: text-bottom;
+      animation: blink 1s step-end infinite;
+    }
+
+    @keyframes blink { 0%,100%{ opacity:1 } 50%{ opacity:0 } }
+
+    /* ── STATS BAR ───────────────────────────────────────────────────────────── */
+    .stats-bar {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 48px;
+    }
+
+    .stat {
+      flex: 1;
+      padding: 28px 24px;
+      border-right: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .stat:last-child { border-right: none; }
+
+    .stat-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .stat-num span { color: var(--green); }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.3px;
+    }
+
+    /* ── SECTIONS ────────────────────────────────────────────────────────────── */
+    section {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 80px 48px;
+    }
+
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    h2 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 14px;
+    }
+
+    .section-sub {
+      font-size: 0.95rem;
+      color: var(--text2);
+      max-width: 480px;
+      margin-bottom: 48px;
+      line-height: 1.7;
+    }
+
+    /* ── FLOW VISUALIZATION ──────────────────────────────────────────────────── */
+    .flow-wrap {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .flow-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+    }
+
+    .flow-tab {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 10px 20px;
+      cursor: pointer;
+      color: var(--muted);
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+      user-select: none;
+    }
+
+    .flow-tab.active { color: var(--green); border-bottom-color: var(--green); }
+
+    .flow-panel { display: none; padding: 32px; }
+    .flow-panel.active { display: block; }
+
+    /* Deploy flow steps */
+    .deploy-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .deploy-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 14px 0;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .deploy-step:not(:last-child) { border-bottom: 1px solid var(--border); }
+
+    .step-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      shrink: 0;
+      flex-shrink: 0;
+      margin-top: 2px;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .deploy-step.active .step-num {
+      background: #22c55e18;
+      border-color: #22c55e44;
+      color: var(--green);
+    }
+
+    .step-content { flex: 1; min-width: 0; }
+
+    .step-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text2);
+      margin-bottom: 3px;
+      transition: color 0.15s;
+    }
+
+    .deploy-step.active .step-title { color: var(--text); }
+
+    .step-desc {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .step-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #3b82f6;
+      margin-top: 4px;
+    }
+
+    /* Blue-Green visualization */
+    .bg-viz {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .bg-slot {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 20px;
+      transition: border-color 0.4s, background 0.4s;
+    }
+
+    .bg-slot.live {
+      border-color: #22c55e44;
+      background: #22c55e06;
+    }
+
+    .bg-slot.blue-live { border-color: #3b82f644; background: #3b82f606; }
+    .bg-slot.green-live { border-color: #22c55e44; background: #22c55e06; }
+
+    .slot-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .slot-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .slot-name.blue { color: #3b82f6; }
+    .slot-name.green { color: #22c55e; }
+
+    .live-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 999px;
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+
+    .live-pill.blue  { background: #3b82f6; color: #fff; }
+    .live-pill.green { background: #22c55e; color: #000; }
+    .live-pill.show  { opacity: 1; }
+
+    .slot-row {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .slot-row span:last-child { color: var(--text2); }
+
+    .traffic-arrow {
+      text-align: center;
+      padding: 12px 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .traffic-to {
+      font-weight: 600;
+      transition: color 0.4s;
+    }
+
+    .bg-controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    /* ── FEATURES GRID ───────────────────────────────────────────────────────── */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .feature {
+      background: var(--bg);
+      padding: 28px 24px;
+    }
+
+    .feature-icon {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      margin-bottom: 14px;
+      display: block;
+    }
+
+    .feature-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 7px;
+    }
+
+    .feature-desc {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.6;
+    }
+
+    /* ── SETUP DOCS ──────────────────────────────────────────────────────────── */
+    .setup-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    .setup-step {
+      display: grid;
+      grid-template-columns: 32px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .setup-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: 1px solid var(--border2);
+      background: var(--bg2);
+      color: var(--text2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .setup-content { min-width: 0; }
+
+    .setup-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .setup-desc {
+      font-size: 13px;
+      color: var(--text2);
+      margin-bottom: 14px;
+      line-height: 1.6;
+    }
+
+    .code-block {
+      background: var(--bg4);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .code-block-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+    }
+
+    .code-block-lang {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.3px;
+    }
+
+    .copy-btn {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      background: none;
+      border: 1px solid var(--border2);
+      border-radius: 3px;
+      padding: 2px 8px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+
+    .copy-btn:hover { color: var(--text); border-color: var(--text2); background: var(--bg3); }
+    .copy-btn.copied { color: var(--green); border-color: #22c55e44; }
+
+    .code-block pre {
+      padding: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.75;
+      color: var(--text2);
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    .code-block pre .hl { color: var(--text); }
+    .code-block pre .cm { color: var(--muted); }
+    .code-block pre .kw { color: #3b82f6; }
+    .code-block pre .st { color: #22c55e; }
+    .code-block pre .vr { color: #f59e0b; }
+
+    /* ── ENV TABLE ───────────────────────────────────────────────────────────── */
+    .env-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .env-table th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+    }
+
+    .env-table td {
+      padding: 11px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    .env-table tr:last-child td { border-bottom: none; }
+
+    .env-table td:first-child {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #f59e0b;
+      white-space: nowrap;
+    }
+
+    .env-table td:nth-child(2) {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text2);
+    }
+
+    .env-table td:nth-child(3) { color: var(--text2); }
+    .env-table td:nth-child(4) { color: var(--muted); }
+
+    .req-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: #ef444418;
+      border: 1px solid #ef444430;
+      color: #ef4444;
+    }
+
+    /* ── API TABLE ───────────────────────────────────────────────────────────── */
+    .api-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .api-table th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 10px 16px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .api-table td {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text2);
+    }
+
+    .api-table tr:last-child td { border-bottom: none; }
+
+    .method {
+      font-weight: 600;
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 3px;
+    }
+
+    .GET    { background: #22c55e18; color: #22c55e; border: 1px solid #22c55e30; }
+    .POST   { background: #3b82f618; color: #3b82f6; border: 1px solid #3b82f630; }
+    .PATCH  { background: #f59e0b18; color: #f59e0b; border: 1px solid #f59e0b30; }
+    .DELETE { background: #ef444418; color: #ef4444; border: 1px solid #ef444430; }
+
+    .api-path { color: var(--text); }
+    .api-desc { color: var(--muted); font-family: 'Inter', sans-serif; font-size: 12px; }
+
+    /* ── FOOTER ──────────────────────────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-left {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .footer-left strong { color: var(--text2); font-weight: 500; }
+
+    .footer-links {
+      display: flex;
+      gap: 24px;
+      list-style: none;
+    }
+
+    .footer-links a {
+      font-size: 13px;
+      color: var(--muted);
+      transition: color 0.15s;
+    }
+
+    .footer-links a:hover { color: var(--text2); }
+
+    /* ── DIVIDER ─────────────────────────────────────────────────────────────── */
+    .full-divider { border: none; border-top: 1px solid var(--border); }
+
+    /* ── UTILS ───────────────────────────────────────────────────────────────── */
+    .mt8  { margin-top: 8px; }
+    .mt16 { margin-top: 16px; }
+    .mt24 { margin-top: 24px; }
+    .mb8  { margin-bottom: 8px; }
+    .tag {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 3px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      color: var(--text2);
+    }
+
+    @media (max-width: 768px) {
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      .hero { padding: 64px 20px 48px; }
+      h1 { font-size: 2rem; }
+      section { padding: 56px 20px; }
+      .stats-bar { flex-direction: column; padding: 0 20px; }
+      .stat { border-right: none; border-bottom: 1px solid var(--border); width: 100%; }
+      .stat:last-child { border-bottom: none; }
+      .features { grid-template-columns: 1fr; }
+      .bg-viz { grid-template-columns: 1fr; }
+      footer { flex-direction: column; gap: 16px; padding: 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ──────────────────────────────────────────────────────────────────── -->
+<nav>
+  <div class="nav-logo">
+    <span>▸</span> ZeroShift Engine
+  </div>
+  <ul class="nav-links">
+    <li><a href="#how-it-works">How it works</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#setup">Setup</a></li>
+    <li><a href="#api">API</a></li>
+  </ul>
+  <a class="nav-cta" href="https://github.com/dinexh/ZeroShift-Engine" target="_blank">GitHub →</a>
+</nav>
+
+<!-- ── HERO ─────────────────────────────────────────────────────────────────── -->
+<div class="hero">
+  <div class="badge">v1.0 — Self-hosted</div>
+
+  <h1>Deploy with <em>zero downtime.</em><br/>Own your infra.</h1>
+
+  <p class="hero-sub">
+    ZeroShift is a self-hosted deployment engine that runs blue-green Docker deployments on your own server.
+    Push to GitHub — ZeroShift pulls the source, builds the image, starts the container,
+    switches Nginx traffic, and tears down the old one. No downtime. No cloud lock-in.
+  </p>
+
+  <div class="hero-actions">
+    <a href="#setup" class="btn-primary">Get started →</a>
+    <a href="https://github.com/dinexh/ZeroShift-Engine" class="btn-ghost" target="_blank">View on GitHub</a>
+  </div>
+
+  <div class="terminal">
+    <div class="terminal-bar">
+      <div class="dot dot-red"></div>
+      <div class="dot dot-yellow"></div>
+      <div class="dot dot-green"></div>
+      <span class="terminal-title">zeroshift — deploy log</span>
+    </div>
+    <div class="terminal-body" id="terminal-body">
+      <span class="cursor" id="cursor"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ── STATS ─────────────────────────────────────────────────────────────────── -->
+<div class="stats-bar">
+  <div class="stat">
+    <div class="stat-num">0<span>s</span></div>
+    <div class="stat-label">downtime per deploy</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">2</div>
+    <div class="stat-label">live container slots (blue / green)</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">1<span>-click</span></div>
+    <div class="stat-label">rollback to previous deployment</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">∞</div>
+    <div class="stat-label">projects on a single server</div>
+  </div>
+</div>
+
+<!-- ── HOW IT WORKS ──────────────────────────────────────────────────────────── -->
+<section id="how-it-works">
+  <p class="section-label">// how it works</p>
+  <h2>Push. Build. Switch. Done.</h2>
+  <p class="section-sub">Every deploy targets the idle container slot. The live app is never touched until the new one is healthy.</p>
+
+  <div class="flow-wrap">
+    <div class="flow-tabs">
+      <div class="flow-tab active" onclick="showTab('deploy')">Deploy pipeline</div>
+      <div class="flow-tab" onclick="showTab('bluegreen')">Blue / Green</div>
+      <div class="flow-tab" onclick="showTab('rollback')">Rollback</div>
+    </div>
+
+    <!-- Deploy pipeline -->
+    <div class="flow-panel active" id="tab-deploy">
+      <div class="deploy-steps">
+        <div class="deploy-step active" data-step="0" onclick="setStep(0)">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <div class="step-title">Acquire lock</div>
+            <div class="step-desc">Per-project in-memory lock prevents concurrent deploys on the same project. Other projects deploy in parallel.</div>
+            <div class="step-code">DeploymentService.locks.set(projectId, true)</div>
+          </div>
+        </div>
+        <div class="deploy-step" data-step="1" onclick="setStep(1)">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <div class="step-title">Pull source</div>
+            <div class="step-desc">Git clone or fetch + reset to branch HEAD. Auto-generates a Dockerfile if one isn't present (detects Node, Bun, Python).</div>
+            <div class="step-code">git fetch origin && git reset --hard origin/main</div>
+          </div>
+        </div>
+        <div class="deploy-step" data-step="2" onclick="setStep(2)">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <div class="step-title">Build image</div>
+            <div class="step-desc">Runs docker build with the project's build context. Full stdout/stderr captured — build errors surface directly in the dashboard.</div>
+            <div class="step-code">docker build -t zeroshift-myapp:1740000000 ./myapp</div>
+          </div>
+        </div>
+        <div class="deploy-step" data-step="3" onclick="setStep(3)">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <div class="step-title">Start container</div>
+            <div class="step-desc">Pre-cleans stale containers by name and frees the target port before starting. Injects project env vars.</div>
+            <div class="step-code">docker run -d --name myapp-green -p 3101:3000 zeroshift-myapp:...</div>
+          </div>
+        </div>
+        <div class="deploy-step" data-step="4" onclick="setStep(4)">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <div class="step-title">Switch traffic</div>
+            <div class="step-desc">Rewrites the Nginx upstream config to point to the new container's port. Reloads Nginx with zero dropped connections.</div>
+            <div class="step-code">nginx -s reload  # upstream localhost:3101</div>
+          </div>
+        </div>
+        <div class="deploy-step" data-step="5" onclick="setStep(5)">
+          <div class="step-num">6</div>
+          <div class="step-content">
+            <div class="step-title">Retire old slot</div>
+            <div class="step-desc">Previous ACTIVE deployment is stopped, removed, and marked ROLLED_BACK — ready for the next rollback.</div>
+            <div class="step-code">docker stop myapp-blue && docker rm myapp-blue</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Blue-green -->
+    <div class="flow-panel" id="tab-bluegreen">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.7;">
+        Each project has two container slots — <span style="color:#3b82f6;font-weight:600;">BLUE</span> on <code>basePort</code>
+        and <span style="color:#22c55e;font-weight:600;">GREEN</span> on <code>basePort+1</code>.
+        One is always live. Every deploy targets the idle one. Click the buttons to simulate.
+      </p>
+
+      <div class="bg-viz">
+        <div class="bg-slot" id="slot-blue">
+          <div class="slot-header">
+            <span class="slot-name blue">BLUE</span>
+            <span class="live-pill blue" id="pill-blue">LIVE</span>
+          </div>
+          <div class="slot-row"><span>port</span><span id="blue-port">:3100</span></div>
+          <div class="slot-row"><span>container</span><span id="blue-container">myapp-blue</span></div>
+          <div class="slot-row"><span>status</span><span id="blue-status">ACTIVE</span></div>
+        </div>
+        <div class="bg-slot" id="slot-green">
+          <div class="slot-header">
+            <span class="slot-name green">GREEN</span>
+            <span class="live-pill green" id="pill-green">LIVE</span>
+          </div>
+          <div class="slot-row"><span>port</span><span>:3101</span></div>
+          <div class="slot-row"><span>container</span><span>myapp-green</span></div>
+          <div class="slot-row"><span>status</span><span id="green-status">idle</span></div>
+        </div>
+      </div>
+
+      <div class="traffic-arrow">
+        nginx upstream → <span class="traffic-to" id="traffic-to" style="color:#3b82f6;">localhost:3100 (blue)</span>
+      </div>
+
+      <div class="bg-controls">
+        <button class="btn-primary" onclick="simulateDeploy()" id="sim-btn">▸ Simulate deploy</button>
+        <button class="btn-ghost" onclick="resetSim()">Reset</button>
+      </div>
+      <div id="sim-log" style="margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:2;color:var(--muted);"></div>
+    </div>
+
+    <!-- Rollback -->
+    <div class="flow-panel" id="tab-rollback">
+      <div class="deploy-steps">
+        <div class="deploy-step active">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <div class="step-title">Find previous deployment</div>
+            <div class="step-desc">Queries the most recent deployment with status <code>ROLLED_BACK</code> and a lower version number than current.</div>
+          </div>
+        </div>
+        <div class="deploy-step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <div class="step-title">Re-run old container</div>
+            <div class="step-desc">Starts the previous image on its original port. If the image was pruned, rollback is aborted safely — the current deployment stays live.</div>
+            <div class="step-code">docker run -d --name myapp-blue -p 3100:3000 zeroshift-myapp:prev</div>
+          </div>
+        </div>
+        <div class="deploy-step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <div class="step-title">Verify health</div>
+            <div class="step-desc">Health check runs before switching traffic. If it fails, the restarted container is cleaned up and the current deployment stays active.</div>
+          </div>
+        </div>
+        <div class="deploy-step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <div class="step-title">Switch traffic &amp; swap statuses</div>
+            <div class="step-desc">Nginx is reloaded to the old container. The old deployment becomes ACTIVE, the current one becomes ROLLED_BACK.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="full-divider" />
+
+<!-- ── FEATURES ──────────────────────────────────────────────────────────────── -->
+<section id="features">
+  <p class="section-label">// features</p>
+  <h2>Everything you need.<br/>Nothing you don't.</h2>
+  <p class="section-sub">Built for real deployments on real hardware, not abstract cloud primitives.</p>
+
+  <div class="features">
+    <div class="feature">
+      <span class="feature-icon">⬡</span>
+      <div class="feature-title">Blue-green deployments</div>
+      <p class="feature-desc">Two container slots per project. Traffic switches in milliseconds via Nginx upstream reload. Zero dropped connections.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">⎇</span>
+      <div class="feature-title">Git-native workflow</div>
+      <p class="feature-desc">Webhook triggers on push. ZeroShift clones or fetches your repo, checks out the configured branch, and deploys.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">⟳</span>
+      <div class="feature-title">One-click rollback</div>
+      <p class="feature-desc">Every previous deployment is stored. Roll back to any ROLLED_BACK version instantly — health-checked before traffic switches.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">✕</span>
+      <div class="feature-title">Cancel mid-deploy</div>
+      <p class="feature-desc">Stuck on a long build? Hit Stop. The pipeline is interrupted at the next checkpoint, the container stopped, and the lock released.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">📄</span>
+      <div class="feature-title">Auto Dockerfile</div>
+      <p class="feature-desc">No Dockerfile? ZeroShift generates one — detects Node.js, Bun, Python. Scans subdirectories. Regenerated each deploy, never overwrites yours.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">⚡</span>
+      <div class="feature-title">Crash recovery</div>
+      <p class="feature-desc">On startup, reconciliation scans for DEPLOYING records (process died mid-deploy), marks them FAILED, and cleans up orphaned containers.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">⚙</span>
+      <div class="feature-title">Per-project env vars</div>
+      <p class="feature-desc">Inject environment variables per project via the dashboard. Applied to the next deploy — no restart required.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">✦</span>
+      <div class="feature-title">AI CI pipeline</div>
+      <p class="feature-desc">Generate a GitHub Actions CI/CD workflow for your project in seconds. Wired to your ZeroShift webhook automatically.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">◈</span>
+      <div class="feature-title">Built-in dashboard</div>
+      <p class="feature-desc">Real-time metrics, live logs, deployment history, blue/green slot status — served from the same Fastify server as the API.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="full-divider" />
+
+<!-- ── SETUP ─────────────────────────────────────────────────────────────────── -->
+<section id="setup">
+  <p class="section-label">// setup</p>
+  <h2>Local setup in 6 steps.</h2>
+  <p class="section-sub">Requires Bun, Docker, Nginx, and a PostgreSQL database (Neon free tier works).</p>
+
+  <div class="setup-steps">
+
+    <div class="setup-step">
+      <div class="setup-num">1</div>
+      <div class="setup-content">
+        <div class="setup-title">Clone &amp; install</div>
+        <p class="setup-desc">Clone the repo and install dependencies with Bun.</p>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash</span>
+            <button class="copy-btn" onclick="copyCode(this)">copy</button>
+          </div>
+          <pre><span class="hl">git clone</span> https://github.com/dinexh/ZeroShift-Engine
+<span class="hl">cd</span> ZeroShift-Engine
+<span class="hl">bun install</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="setup-step">
+      <div class="setup-num">2</div>
+      <div class="setup-content">
+        <div class="setup-title">Configure .env</div>
+        <p class="setup-desc">Create a <code>.env</code> file at the repo root. Only <code>DATABASE_URL</code> is required.</p>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-block-lang">.env</span>
+            <button class="copy-btn" onclick="copyCode(this)">copy</button>
+          </div>
+          <pre><span class="cm"># Required</span>
+<span class="vr">DATABASE_URL</span>=postgresql://user:pass@host/db
+
+<span class="cm"># Optional</span>
+<span class="vr">PORT</span>=9090
+<span class="vr">DOCKER_NETWORK</span>=bridge
+<span class="vr">NGINX_CONFIG_PATH</span>=/etc/nginx/conf.d/upstream.conf
+<span class="vr">PROJECTS_ROOT_PATH</span>=/var/zeroshift/projects
+<span class="vr">GEMINI_API_KEY</span>=           <span class="cm"># for AI pipeline generation</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="setup-step">
+      <div class="setup-num">3</div>
+      <div class="setup-content">
+        <div class="setup-title">Push database schema</div>
+        <p class="setup-desc">Creates the <code>Project</code> and <code>Deployment</code> tables. Re-run after any schema change.</p>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash</span>
+            <button class="copy-btn" onclick="copyCode(this)">copy</button>
+          </div>
+          <pre><span class="hl">bunx prisma db push</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="setup-step">
+      <div class="setup-num">4</div>
+      <div class="setup-content">
+        <div class="setup-title">Build the dashboard</div>
+        <p class="setup-desc">Next.js static export. Fastify serves it automatically from <code>dashboard/out/</code>.</p>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash</span>
+            <button class="copy-btn" onclick="copyCode(this)">copy</button>
+          </div>
+          <pre><span class="hl">cd</span> dashboard && <span class="hl">bun install</span> && <span class="hl">bun run build</span> && <span class="hl">cd</span> ..</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="setup-step">
+      <div class="setup-num">5</div>
+      <div class="setup-content">
+        <div class="setup-title">Start the engine</div>
+        <p class="setup-desc">Dev mode with watch, or production via PM2.</p>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash — dev</span>
+            <button class="copy-btn" onclick="copyCode(this)">copy</button>
+          </div>
+          <pre><span class="hl">bun --watch</span> src/server.ts</pre>
+        </div>
+        <div class="code-block mt16">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash — production</span>
+            <button class="copy-btn" onclick="copyCode(this)">copy</button>
+          </div>
+          <pre><span class="hl">pm2 start</span> ecosystem.config.cjs
+<span class="hl">pm2 save</span>                 <span class="cm"># persist across reboots</span></pre>
+        </div>
+        <p class="setup-desc mt8">Engine + dashboard available at <strong>http://localhost:9090</strong></p>
+      </div>
+    </div>
+
+    <div class="setup-step">
+      <div class="setup-num">6</div>
+      <div class="setup-content">
+        <div class="setup-title">Create a project &amp; deploy</div>
+        <p class="setup-desc"><code>basePort</code> is auto-assigned. <code>webhookSecret</code> is auto-generated — copy the URL from the dashboard after creation.</p>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash</span>
+            <button class="copy-btn" onclick="copyCode(this)">copy</button>
+          </div>
+          <pre><span class="cm"># Create project</span>
+<span class="hl">curl</span> -X POST http://localhost:9090/api/v1/projects \
+  -H <span class="st">'Content-Type: application/json'</span> \
+  -d <span class="st">'{ "name": "myapp", "repoUrl": "https://github.com/you/myapp",
+       "branch": "main", "appPort": 3000 }'</span>
+
+<span class="cm"># Trigger first deploy</span>
+<span class="hl">curl</span> -X POST http://localhost:9090/api/v1/deploy \
+  -H <span class="st">'Content-Type: application/json'</span> \
+  -d <span class="st">'{ "projectId": "&lt;id&gt;" }'</span></pre>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ENV VARS TABLE -->
+  <h3 style="font-size:1.1rem;font-weight:600;margin-top:64px;margin-bottom:20px;">Environment variables</h3>
+  <div class="code-block" style="padding:0;">
+    <table class="env-table">
+      <thead>
+        <tr>
+          <th>Variable</th>
+          <th>Default</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>DATABASE_URL <span class="req-badge">required</span></td><td>—</td><td>PostgreSQL connection string</td></tr>
+        <tr><td>PORT</td><td>9090</td><td>API + dashboard port</td></tr>
+        <tr><td>DOCKER_NETWORK</td><td>bridge</td><td>Docker network for containers</td></tr>
+        <tr><td>NGINX_CONFIG_PATH</td><td>/etc/nginx/conf.d/upstream.conf</td><td>Nginx upstream file</td></tr>
+        <tr><td>PROJECTS_ROOT_PATH</td><td>/var/zeroshift/projects</td><td>Root dir for cloned repos</td></tr>
+        <tr><td>GEMINI_API_KEY</td><td>—</td><td>Google AI Studio key (optional)</td></tr>
+        <tr><td>GEMINI_MODEL</td><td>gemini-2.5-pro</td><td>Gemini model ID</td></tr>
+        <tr><td>LOG_LEVEL</td><td>info</td><td>Pino log level</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<hr class="full-divider" />
+
+<!-- ── API ───────────────────────────────────────────────────────────────────── -->
+<section id="api">
+  <p class="section-label">// api reference</p>
+  <h2>REST API</h2>
+  <p class="section-sub">All endpoints are prefixed with <code>/api/v1</code>. Responses are JSON.</p>
+
+  <h3 style="font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:12px;font-family:'JetBrains Mono',monospace;">Projects</h3>
+  <table class="api-table mb8">
+    <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><span class="method POST">POST</span></td><td class="api-path">/projects</td><td class="api-desc">Create project</td></tr>
+      <tr><td><span class="method GET">GET</span></td><td class="api-path">/projects</td><td class="api-desc">List all projects</td></tr>
+      <tr><td><span class="method GET">GET</span></td><td class="api-path">/projects/:id</td><td class="api-desc">Get project</td></tr>
+      <tr><td><span class="method PATCH">PATCH</span></td><td class="api-path">/projects/:id</td><td class="api-desc">Update branch / ports / build context</td></tr>
+      <tr><td><span class="method PATCH">PATCH</span></td><td class="api-path">/projects/:id/env</td><td class="api-desc">Update env vars</td></tr>
+      <tr><td><span class="method DELETE">DELETE</span></td><td class="api-path">/projects/:id</td><td class="api-desc">Delete project</td></tr>
+      <tr><td><span class="method POST">POST</span></td><td class="api-path">/projects/:id/rollback</td><td class="api-desc">Rollback to previous deployment</td></tr>
+      <tr><td><span class="method POST">POST</span></td><td class="api-path">/projects/:id/cancel-deploy</td><td class="api-desc">Cancel in-progress deployment</td></tr>
+    </tbody>
+  </table>
+
+  <h3 style="font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin:28px 0 12px;font-family:'JetBrains Mono',monospace;">Deployments</h3>
+  <table class="api-table mb8">
+    <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><span class="method POST">POST</span></td><td class="api-path">/deploy</td><td class="api-desc">Trigger deployment  { projectId }</td></tr>
+      <tr><td><span class="method GET">GET</span></td><td class="api-path">/deployments</td><td class="api-desc">List all deployments</td></tr>
+      <tr><td><span class="method GET">GET</span></td><td class="api-path">/status</td><td class="api-desc">Current active deployment</td></tr>
+    </tbody>
+  </table>
+
+  <h3 style="font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin:28px 0 12px;font-family:'JetBrains Mono',monospace;">Webhooks &amp; System</h3>
+  <table class="api-table">
+    <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><span class="method POST">POST</span></td><td class="api-path">/webhooks/:secret</td><td class="api-desc">GitHub push webhook — triggers auto-deploy</td></tr>
+      <tr><td><span class="method GET">GET</span></td><td class="api-path">/system/server-stats</td><td class="api-desc">Host CPU / memory / disk / network</td></tr>
+      <tr><td><span class="method POST">POST</span></td><td class="api-path">/system/reconcile</td><td class="api-desc">Manual crash recovery</td></tr>
+      <tr><td><span class="method GET">GET</span></td><td class="api-path">/health</td><td class="api-desc">Engine health check</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ── FOOTER ─────────────────────────────────────────────────────────────────── -->
+<footer>
+  <div class="footer-left">
+    <strong>ZeroShift Engine</strong> — self-hosted, zero-downtime deployments
+  </div>
+  <ul class="footer-links">
+    <li><a href="https://github.com/dinexh/ZeroShift-Engine" target="_blank">GitHub</a></li>
+    <li><a href="#setup">Setup</a></li>
+    <li><a href="#api">API</a></li>
+  </ul>
+</footer>
+
+<script>
+  // ── TERMINAL TYPEWRITER ─────────────────────────────────────────────────────
+  const lines = [
+    { text: '$ git push origin main', cls: 'term-prompt' },
+    { text: 'Enumerating objects: 5, done.', cls: 'term-muted' },
+    { text: 'Writing objects: 100% (3/3), done.', cls: 'term-muted' },
+    { text: '', cls: '' },
+    { text: 'ZeroShift ▸ webhook received [nithin]', cls: 'term-info' },
+    { text: 'ZeroShift ▸ pulling source...          ✓', cls: 'term-ok' },
+    { text: 'ZeroShift ▸ building image...          ✓', cls: 'term-ok' },
+    { text: 'ZeroShift ▸ starting nithin-green...   ✓', cls: 'term-ok' },
+    { text: 'ZeroShift ▸ switching traffic → :3101  ✓', cls: 'term-ok' },
+    { text: 'ZeroShift ▸ stopping nithin-blue...    ✓', cls: 'term-ok' },
+    { text: '', cls: '' },
+    { text: 'nithin-green is live on :3101  [v2 · ACTIVE]', cls: 'term-prompt' },
+  ];
+
+  const body = document.getElementById('terminal-body');
+  const cursor = document.getElementById('cursor');
+  let li = 0, ci = 0;
+  let currentEl = null;
+
+  function tick() {
+    if (li >= lines.length) { body.appendChild(cursor); return; }
+    const { text, cls } = lines[li];
+    if (ci === 0) {
+      currentEl = document.createElement('div');
+      currentEl.className = 'term-line visible' + (cls ? ' ' + cls : '');
+      body.insertBefore(currentEl, cursor);
+    }
+    if (ci < text.length) {
+      currentEl.textContent = text.slice(0, ci + 1);
+      ci++;
+      setTimeout(tick, text.startsWith('ZeroShift') ? 18 : text.startsWith('$') ? 55 : 12);
+    } else {
+      li++; ci = 0;
+      const delay = text === '' ? 80 : text.startsWith('$') ? 300 : text.startsWith('ZeroShift') ? 220 : 60;
+      setTimeout(tick, delay);
+    }
+  }
+
+  setTimeout(tick, 600);
+
+  // ── TABS ────────────────────────────────────────────────────────────────────
+  function showTab(id) {
+    document.querySelectorAll('.flow-tab').forEach((t, i) => {
+      t.classList.toggle('active', ['deploy','bluegreen','rollback'][i] === id);
+    });
+    document.querySelectorAll('.flow-panel').forEach(p => {
+      p.classList.toggle('active', p.id === 'tab-' + id);
+    });
+  }
+
+  // ── DEPLOY STEPS ────────────────────────────────────────────────────────────
+  function setStep(n) {
+    document.querySelectorAll('.deploy-step').forEach((s, i) => {
+      s.classList.toggle('active', i === n);
+    });
+  }
+
+  // ── BLUE-GREEN SIMULATION ───────────────────────────────────────────────────
+  let simState = 'blue-live'; // or 'green-live'
+  let simRunning = false;
+
+  function log(msg, color) {
+    const el = document.getElementById('sim-log');
+    const span = document.createElement('div');
+    span.textContent = msg;
+    span.style.color = color || 'var(--muted)';
+    el.appendChild(span);
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function resetSim() {
+    if (simRunning) return;
+    simState = 'blue-live';
+    document.getElementById('sim-log').innerHTML = '';
+    applySimState();
+  }
+
+  function applySimState() {
+    const blueLive = simState === 'blue-live';
+    document.getElementById('slot-blue').className = 'bg-slot ' + (blueLive ? 'blue-live' : '');
+    document.getElementById('slot-green').className = 'bg-slot ' + (!blueLive ? 'green-live' : '');
+    document.getElementById('pill-blue').className = 'live-pill blue' + (blueLive ? ' show' : '');
+    document.getElementById('pill-green').className = 'live-pill green' + (!blueLive ? ' show' : '');
+    document.getElementById('blue-status').textContent = blueLive ? 'ACTIVE' : 'ROLLED_BACK';
+    document.getElementById('green-status').textContent = !blueLive ? 'ACTIVE' : 'idle';
+    const t = document.getElementById('traffic-to');
+    t.textContent = blueLive ? 'localhost:3100 (blue)' : 'localhost:3101 (green)';
+    t.style.color = blueLive ? '#3b82f6' : '#22c55e';
+  }
+
+  async function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  async function simulateDeploy() {
+    if (simRunning) return;
+    simRunning = true;
+    document.getElementById('sim-btn').textContent = '...';
+    document.getElementById('sim-log').innerHTML = '';
+
+    const next = simState === 'blue-live' ? 'green' : 'blue';
+    const port  = next === 'green' ? ':3101' : ':3100';
+
+    log('▸ deploy triggered', '#a1a1a1');
+    await wait(600);
+    log('▸ pulling source from GitHub...', '#a1a1a1');
+    await wait(700);
+    log('▸ building image...', '#a1a1a1');
+    await wait(900);
+    log(`▸ starting myapp-${next} on ${port}`, '#a1a1a1');
+    await wait(500);
+
+    simState = next + '-live';
+    applySimState();
+
+    await wait(300);
+    log(`✓ traffic → myapp-${next} ${port}`, '#22c55e');
+    await wait(300);
+    log(`✓ myapp-${next === 'green' ? 'blue' : 'green'} stopped`, '#22c55e');
+    await wait(200);
+    log(`✓ deploy complete — v${next === 'green' ? 2 : 3} active`, '#22c55e');
+
+    simRunning = false;
+    document.getElementById('sim-btn').textContent = '▸ Simulate deploy';
+  }
+
+  // Init blue-green
+  document.getElementById('pill-blue').classList.add('show');
+
+  // ── COPY BUTTONS ────────────────────────────────────────────────────────────
+  function copyCode(btn) {
+    const pre = btn.closest('.code-block').querySelector('pre');
+    const text = pre.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+</script>
+</body>
+</html>
