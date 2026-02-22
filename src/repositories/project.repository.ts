@@ -14,6 +14,10 @@ export class ProjectRepository {
     return prisma.project.findUnique({ where: { name } });
   }
 
+  async findByWebhookSecret(secret: string): Promise<Project | null> {
+    return prisma.project.findUnique({ where: { webhookSecret: secret } });
+  }
+
   async findAll(): Promise<Project[]> {
     return prisma.project.findMany({
       orderBy: { createdAt: "desc" },

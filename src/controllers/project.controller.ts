@@ -1,5 +1,6 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import path from "path";
+import { randomBytes } from "crypto";
 import { ProjectRepository } from "../repositories/project.repository";
 import { RollbackService } from "../services/rollback.service";
 import { config } from "../config/env";
@@ -49,6 +50,9 @@ export async function createProjectHandler(
   // Never reuse a port range already claimed by another project.
   const basePort = await projectRepo.getNextBasePort();
 
+  // Unique secret for the GitHub webhook URL — acts as authentication token.
+  const webhookSecret = randomBytes(24).toString("hex");
+
   // localPath is auto-computed — set a placeholder before we have the id.
   // We create the project then update localPath with the generated id.
   const project = await projectRepo.create({
@@ -59,6 +63,7 @@ export async function createProjectHandler(
     appPort,
     healthPath,
     basePort,
+    webhookSecret,
     localPath: "", // temporary; patched below
     env,
   });

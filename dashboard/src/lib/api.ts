@@ -17,6 +17,7 @@ export interface Project {
   appPort: number;
   healthPath: string;
   basePort: number;
+  webhookSecret?: string | null;
   env: Record<string, string>;
   createdAt: string;
   updatedAt: string;

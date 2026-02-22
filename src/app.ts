@@ -8,6 +8,7 @@ import { deploymentRoutes } from "./routes/deployment.routes";
 import { projectRoutes } from "./routes/project.routes";
 import { systemRoutes } from "./routes/system.routes";
 import { metricsRoutes } from "./routes/metrics.routes";
+import { webhookRoutes } from "./routes/webhook.routes";
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -67,6 +68,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(projectRoutes, { prefix: "/api/v1" });
   await app.register(systemRoutes, { prefix: "/api/v1" });
   await app.register(metricsRoutes, { prefix: "/api/v1" });
+  await app.register(webhookRoutes, { prefix: "/api/v1" });
 
   // ── Dashboard static serving ────────────────────────────────────────────────
   const dashboardPath = join(process.cwd(), "dashboard", "out");

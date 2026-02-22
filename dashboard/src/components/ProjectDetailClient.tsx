@@ -574,6 +574,28 @@ export function ProjectDetailClient() {
           </div>
 
           {/* Danger zone */}
+          {/* Webhook URL */}
+          {project.webhookSecret && (
+            <div className="pt-3 border-t border-zinc-800 space-y-1.5">
+              <p className="text-xs font-medium text-zinc-400">GitHub Auto-Deploy Webhook</p>
+              <p className="text-xs text-zinc-500">Add this URL to your repo → Settings → Webhooks. Set content type to <code className="text-zinc-400">application/json</code> and trigger on <code className="text-zinc-400">push</code> events.</p>
+              <div className="flex items-center gap-1.5">
+                <code className="flex-1 text-xs bg-zinc-900 border border-zinc-700 rounded px-2 py-1.5 text-zinc-300 truncate">
+                  {typeof window !== "undefined" ? window.location.origin : ""}/api/v1/webhooks/{project.webhookSecret}
+                </code>
+                <button
+                  onClick={() => {
+                    const url = `${window.location.origin}/api/v1/webhooks/${project.webhookSecret}`;
+                    navigator.clipboard.writeText(url).then(() => toast.success("Webhook URL copied"));
+                  }}
+                  className="shrink-0 px-2 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 text-xs transition-colors"
+                >
+                  Copy
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="pt-4 border-t border-zinc-800">
             <button
               onClick={() => setDeleteOpen(true)}
