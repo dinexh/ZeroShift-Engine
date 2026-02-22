@@ -4,6 +4,7 @@ import { randomBytes } from "crypto";
 import { ProjectRepository } from "../repositories/project.repository";
 import { RollbackService } from "../services/rollback.service";
 import { config } from "../config/env";
+import { logger } from "../utils/logger";
 import { validateEnvObject } from "../utils/env";
 
 const projectRepo = new ProjectRepository();
