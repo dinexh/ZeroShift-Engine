@@ -3,36 +3,71 @@ import path from "path";
 import { logger } from "./logger";
 
 /**
- * Ensures a Dockerfile exists in the given repo directory.
+ * Ensures a Dockerfile exists in the given build context directory.
  * If one already exists it is left untouched.
  * Otherwise the project type is auto-detected and a Dockerfile is generated.
+ *
+ * Detection order: buildContextDir first, then repoRootDir (fallback).
+ * This handles the common case where the user set a subdirectory as buildContext
+ * but package.json lives at the repo root.
+ *
+ * Returns the directory where the Dockerfile was written (may be repoRootDir
+ * if the fallback was used) — callers should use this as the Docker build context.
  *
  * Currently supported runtimes (detected in order):
  *   1. Node.js  — package.json present
  *   2. Python   — requirements.txt present
  *   3. Go       — go.mod present
  *
- * Throws if the project type cannot be detected.
+ * Throws if the project type cannot be detected in either directory.
  */
-export async function ensureDockerfile(repoDir: string, appPort: number): Promise<void> {
-  const dockerfilePath = path.join(repoDir, "Dockerfile");
-
+export async function ensureDockerfile(
+  buildContextDir: string,
+  appPort: number,
+  repoRootDir?: string
+): Promise<string> {
+  // If a Dockerfile already exists in the build context, use it as-is.
+  const dockerfilePath = path.join(buildContextDir, "Dockerfile");
   try {
     await fs.access(dockerfilePath);
-    logger.info({ repoDir }, "Dockerfile found — skipping generation");
-    return;
+    logger.info({ buildContextDir }, "Dockerfile found — skipping generation");
+    return buildContextDir;
   } catch {
     // Does not exist — generate one
   }
 
-  const content = await generateDockerfile(repoDir, appPort);
-  await fs.writeFile(dockerfilePath, content, "utf-8");
-  logger.info({ repoDir, appPort }, "Dockerfile auto-generated");
+  // Try detection in the specified build context first.
+  const dirsToTry: string[] = [buildContextDir];
+  if (repoRootDir && repoRootDir !== buildContextDir) {
+    dirsToTry.push(repoRootDir);
+  }
+
+  for (const dir of dirsToTry) {
+    const content = await tryGenerateDockerfile(dir, appPort);
+    if (content !== null) {
+      const targetDockerfile = path.join(dir, "Dockerfile");
+      await fs.writeFile(targetDockerfile, content, "utf-8");
+      if (dir !== buildContextDir) {
+        logger.info(
+          { buildContextDir, fallbackDir: dir, appPort },
+          "Dockerfile auto-generated using repo root (build context adjusted)"
+        );
+      } else {
+        logger.info({ dir, appPort }, "Dockerfile auto-generated");
+      }
+      return dir;
+    }
+  }
+
+  throw new Error(
+    "Could not detect project type. Add a Dockerfile to your repository and redeploy."
+  );
 }
 
 // ── Detector ─────────────────────────────────────────────────────────────────
 
-async function generateDockerfile(repoDir: string, appPort: number): Promise<string> {
+/** Returns generated Dockerfile content, or null if the project type is undetectable. */
+async function tryGenerateDockerfile(repoDir: string, appPort: number): Promise<string | null> {
   // 1. Node.js
   const pkgJsonPath = path.join(repoDir, "package.json");
   try {
@@ -59,9 +94,7 @@ async function generateDockerfile(repoDir: string, appPort: number): Promise<str
     // not Go
   }
 
-  throw new Error(
-    "Could not detect project type. Add a Dockerfile to your repository and redeploy."
-  );
+  return null;
 }
 
 // ── Node.js ───────────────────────────────────────────────────────────────────

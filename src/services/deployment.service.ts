@@ -71,8 +71,12 @@ export class DeploymentService {
       logger.info({ projectId, step: 1 }, "Preparing source code");
       await this.git.prepareSource(project);
       this.checkCancelled(projectId);
-      const buildContextPath = this.git.buildContextPath(project);
-      await ensureDockerfile(buildContextPath, project.appPort);
+      const repoRoot = this.git.projectPath(project);
+      const buildContextPath = await ensureDockerfile(
+        this.git.buildContextPath(project),
+        project.appPort,
+        repoRoot
+      );
 
       // ── Step 2: Determine color and port ───────────────────────────────────
       const activeDeployment = await this.repo.findActiveForProject(projectId);
