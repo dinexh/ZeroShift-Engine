@@ -38,7 +38,7 @@ async function start(): Promise<void> {
         nginxConfigPath: config.nginxConfigPath,
         projectsRootPath: config.projectsRootPath,
       },
-      "ZeroShift Engine is running"
+      "Upline Engine is running"
     );
 
     monitor.start();

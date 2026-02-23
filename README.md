@@ -1,6 +1,6 @@
-# ZeroShift Engine
+# Upline Engine
 
-Self-hosted zero-downtime deployment engine. Push to GitHub → ZeroShift pulls the source, builds a Docker image, spins up the new container, switches Nginx traffic, and tears down the old one — all without a single second of downtime.
+Self-hosted zero-downtime deployment engine. Push to GitHub → Upline pulls the source, builds a Docker image, spins up the new container, switches Nginx traffic, and tears down the old one — all without a single second of downtime.
 
 Built for single-server (KVM/VPS) setups where you want Vercel-style deployments on your own hardware.
 
@@ -10,14 +10,14 @@ Built for single-server (KVM/VPS) setups where you want Vercel-style deployments
 
 ### The Approach
 
-ZeroShift uses a **blue-green deployment** strategy. Every project gets two container slots — `blue` and `green` — running on adjacent ports. At any moment one slot is live (receiving traffic) and the other is idle. Each deploy targets the idle slot, so the live app is never touched until the new one is confirmed healthy.
+Upline uses a **blue-green deployment** strategy. Every project gets two container slots — `blue` and `green` — running on adjacent ports. At any moment one slot is live (receiving traffic) and the other is idle. Each deploy targets the idle slot, so the live app is never touched until the new one is confirmed healthy.
 
 ```
 Your Repo
     │
     │  git push  (or manual trigger)
     ▼
-ZeroShift Engine
+Upline Engine
     │
     ├── 1. Pull source         git fetch + reset to branch HEAD
     ├── 2. Build image         docker build -t zeroshift-<name>:<ts> .
@@ -47,7 +47,7 @@ ACTIVE  → ROLLED_BACK               (after the next successful deploy)
 
 ### Auto-Deploy via Webhook
 
-Every project gets a unique webhook URL. Add it to your GitHub repo under **Settings → Webhooks** and ZeroShift will auto-deploy on every push to the configured branch.
+Every project gets a unique webhook URL. Add it to your GitHub repo under **Settings → Webhooks** and Upline will auto-deploy on every push to the configured branch.
 
 ```
 POST /api/v1/webhooks/<secret>
@@ -130,8 +130,8 @@ zeroshift-engine/
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/dinexh/ZeroShift-Engine
-cd ZeroShift-Engine
+git clone https://github.com/dinexh/Upline
+cd Upline
 ```
 
 ### 2. Install dependencies

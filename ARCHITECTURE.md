@@ -1,4 +1,4 @@
-# ZeroShift Engine — Architecture Diagram
+# Upline Engine — Architecture Diagram
 
 ## Deployment Pipeline
 
