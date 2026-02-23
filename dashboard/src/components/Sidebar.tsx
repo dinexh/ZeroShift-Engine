@@ -24,7 +24,7 @@ export function Sidebar() {
           <div className="w-6 h-6 rounded bg-zinc-100 flex items-center justify-center">
             <span className="text-zinc-900 text-xs font-black">Z</span>
           </div>
-          <span className="text-sm font-semibold text-zinc-100 tracking-tight">ZeroShift</span>
+          <span className="text-sm font-semibold text-zinc-100 tracking-tight">VersionGate</span>
           <span className="text-[10px] text-zinc-500 bg-zinc-900 border border-zinc-700 px-1.5 py-0.5 rounded ml-auto">
             Engine
           </span>

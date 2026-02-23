@@ -1171,10 +1171,10 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Trigger ZeroShift deploy
+      - name: Trigger VersionGate deploy
         run: |
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" \\
-            -X POST "\${{ secrets.ZEROSHIFT_WEBHOOK_URL }}")
+            -X POST "\${{ secrets.VERSIONGATE_WEBHOOK_URL }}")
           echo "Webhook status → \$STATUS"
           [ "\$STATUS" = "200" ] || exit 1
 `;
@@ -1221,7 +1221,7 @@ function CIPipelineModal({
         {/* Instructions */}
         <div className="px-6 py-3 bg-zinc-950/40 border-b border-zinc-800 text-xs text-zinc-500 space-y-1">
           <p>1. Save as <code className="text-violet-400">.github/workflows/ci.yml</code> in your repo.</p>
-          <p>2. Add a GitHub secret named <code className="text-violet-400">ZEROSHIFT_WEBHOOK_URL</code> with your webhook URL.</p>
+          <p>2. Add a GitHub secret named <code className="text-violet-400">VERSIONGATE_WEBHOOK_URL</code> with your webhook URL.</p>
         </div>
 
         {/* File bar */}
@@ -1262,7 +1262,7 @@ const AI_STEPS = [
   { icon: "⬡", label: "Analyzing project structure", sub: "Reading repo config, runtime and dependencies..." },
   { icon: "⬡", label: "Designing pipeline stages",   sub: "Planning CI steps: install → build → test → deploy..." },
   { icon: "⬡", label: "Generating workflow YAML",    sub: "Crafting GitHub Actions syntax and job definitions..." },
-  { icon: "⬡", label: "Wiring ZeroShift webhook",    sub: "Injecting auto-deploy trigger into the pipeline..." },
+  { icon: "⬡", label: "Wiring VersionGate webhook",    sub: "Injecting auto-deploy trigger into the pipeline..." },
 ];
 
 function AIPipelinePanel({

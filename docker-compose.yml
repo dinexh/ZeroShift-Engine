@@ -3,7 +3,7 @@ version: "3.9"
 services:
   app:
     build: .
-    container_name: zeroshift-engine
+    container_name: versiongate-engine
     restart: unless-stopped
     ports:
       - "${PORT:-3000}:3000"
@@ -19,16 +19,16 @@ services:
       db:
         condition: service_healthy
     networks:
-      - zeroshift-net
+      - versiongate-net
 
   db:
     image: postgres:16-alpine
-    container_name: zeroshift-db
+    container_name: versiongate-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: zeroshift
+      POSTGRES_DB: versiongate
     ports:
       - "5432:5432"
     volumes:
@@ -39,11 +39,11 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - zeroshift-net
+      - versiongate-net
 
 volumes:
   pg_data:
 
 networks:
-  zeroshift-net:
+  versiongate-net:
     driver: bridge

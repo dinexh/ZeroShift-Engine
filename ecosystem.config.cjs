@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: "zeroshift-engine",
+      name: "versiongate-engine",
       script: "src/server.ts",
       interpreter: "bun",
       watch: false,

@@ -148,7 +148,7 @@ Branch: ${project.branch}
 Build context subdirectory: ${project.buildContext}
 App port: ${project.appPort}
 Health check path: ${project.healthPath}
-ZeroShift deploy webhook: ${webhookUrl}
+VersionGate deploy webhook: ${webhookUrl}
 
 Rules:
 - Trigger on push to "${project.branch}" only

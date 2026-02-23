@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "zeroshift-dashboard",
+      "name": "versiongate-dashboard",
       "dependencies": {
         "next": "15.1.6",
         "react": "^18.3.1",

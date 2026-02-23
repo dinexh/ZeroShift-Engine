@@ -1,5 +1,5 @@
 {
-  "name": "zeroshift-engine",
+  "name": "versiongate-engine",
   "version": "1.0.0",
   "description": "Lightweight zero-downtime Docker deployment orchestrator",
   "main": "dist/server.js",

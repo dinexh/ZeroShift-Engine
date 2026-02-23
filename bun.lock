@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "zeroshift-engine",
+      "name": "versiongate-engine",
       "dependencies": {
         "@fastify/sensible": "^5.5.0",
         "@fastify/static": "^6.12.0",

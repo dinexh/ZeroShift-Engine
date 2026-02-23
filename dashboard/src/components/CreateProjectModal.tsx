@@ -423,7 +423,7 @@ export function CreateProjectModal({ open, onClose, onCreated }: Props) {
             </div>
 
             {/* Health path */}
-            <Field label="Health check path" error={errors.healthPath} hint="ZeroShift hits this endpoint to confirm the container is live.">
+            <Field label="Health check path" error={errors.healthPath} hint="VersionGate hits this endpoint to confirm the container is live.">
               <div className="relative">
                 <input
                   type="text"

@@ -58,7 +58,7 @@ export class TrafficService {
 
   private buildNginxUpstream(port: number): string {
     return [
-      "upstream zeroshift_backend {",
+      "upstream versiongate_backend {",
       `  server 127.0.0.1:${port};`,
       "}",
     ].join("\n") + "\n";

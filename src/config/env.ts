@@ -5,7 +5,7 @@ dotenv.config();
 function requireEnv(key: string): string {
   const value = process.env[key];
   if (!value) {
-    console.error(`[ZeroShift] FATAL: Missing required environment variable: ${key}`);
+    console.error(`[VersionGate] FATAL: Missing required environment variable: ${key}`);
     process.exit(1);
   }
   return value;
@@ -19,9 +19,9 @@ export const config = {
   port: parseInt(optionalEnv("PORT", "9090"), 10) || 9090,
   logLevel: optionalEnv("LOG_LEVEL", "info"),
   databaseUrl: requireEnv("DATABASE_URL"),
-  dockerNetwork: optionalEnv("DOCKER_NETWORK", "zeroshift-net"),
+  dockerNetwork: optionalEnv("DOCKER_NETWORK", "versiongate-net"),
   nginxConfigPath: optionalEnv("NGINX_CONFIG_PATH", "/etc/nginx/conf.d/upstream.conf"),
-  projectsRootPath: optionalEnv("PROJECTS_ROOT_PATH", "/var/zeroshift/projects"),
+  projectsRootPath: optionalEnv("PROJECTS_ROOT_PATH", "/var/versiongate/projects"),
   monixPath: optionalEnv("MONIX_PATH", "/opt/monix"),
   monixPort: parseInt(optionalEnv("MONIX_PORT", "3030"), 10),
   geminiApiKey: optionalEnv("GEMINI_API_KEY", ""),

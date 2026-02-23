@@ -5,7 +5,7 @@ import { Header } from "@/components/Header";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ZeroShift Engine",
+  title: "VersionGate Engine",
   description: "Zero-downtime deployment dashboard",
 };
 

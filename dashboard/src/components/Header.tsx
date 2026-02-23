@@ -20,7 +20,7 @@ function getBreadcrumbs(pathname: string): { label: string; href?: string }[] {
       { label: "Project" },
     ];
   }
-  return [{ label: "ZeroShift" }];
+  return [{ label: "VersionGate" }];
 }
 
 export function Header() {
@@ -73,7 +73,7 @@ export function Header() {
           </button>
 
           <span className="text-xs text-zinc-700 hidden md:inline">
-            {PAGE_TITLES[pathname] ?? "ZeroShift"}
+            {PAGE_TITLES[pathname] ?? "VersionGate"}
           </span>
         </div>
       </header>

@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ZeroShift Engine — Zero-Downtime Deployments</title>
-  <meta name="description" content="Self-hosted blue-green deployment engine. Push to GitHub, ZeroShift handles the rest." />
-  <meta property="og:title" content="ZeroShift Engine — Zero-Downtime Deployments" />
-  <meta property="og:description" content="Self-hosted blue-green deployment engine. Push to GitHub, ZeroShift handles the rest. No cloud lock-in." />
+  <title>VersionGate Engine — Zero-Downtime Deployments</title>
+  <meta name="description" content="Self-hosted blue-green deployment engine. Push to GitHub, VersionGate handles the rest." />
+  <meta property="og:title" content="VersionGate Engine — Zero-Downtime Deployments" />
+  <meta property="og:description" content="Self-hosted blue-green deployment engine. Push to GitHub, VersionGate handles the rest. No cloud lock-in." />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="ZeroShift Engine — Zero-Downtime Deployments" />
+  <meta name="twitter:title" content="VersionGate Engine — Zero-Downtime Deployments" />
   <meta name="twitter:description" content="Self-hosted blue-green deployment engine. Zero downtime. Own your infra." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -1004,7 +1004,7 @@
 <nav>
   <a href="#" class="nav-logo">
     <div class="nav-logo-icon">Z</div>
-    ZeroShift Engine
+    VersionGate Engine
   </a>
   <ul class="nav-links">
     <li><a href="#how-it-works">How it works</a></li>
@@ -1012,7 +1012,7 @@
     <li><a href="#setup">Setup</a></li>
     <li><a href="#api">API</a></li>
   </ul>
-  <a href="https://github.com/dinexh/ZeroShift-Engine" target="_blank" class="nav-gh">GitHub ↗</a>
+  <a href="https://github.com/dinexh/VersionGate" target="_blank" class="nav-gh">GitHub ↗</a>
 </nav>
 
 <!-- ── HERO ─────────────────────────────────────────────────────────────────── -->
@@ -1022,14 +1022,14 @@
   <h1>Deploy with <em>zero downtime.</em><br/>Own your infra.</h1>
 
   <p class="hero-sub">
-    ZeroShift is a self-hosted deployment engine that runs blue-green Docker deployments on your own server.
-    Push to GitHub — ZeroShift pulls the source, builds the image, starts the container,
+    VersionGate is a self-hosted deployment engine that runs blue-green Docker deployments on your own server.
+    Push to GitHub — VersionGate pulls the source, builds the image, starts the container,
     switches Nginx traffic, and tears down the old one. No downtime. No cloud lock-in.
   </p>
 
   <div class="hero-actions">
     <a href="#setup" class="btn-primary">Get started →</a>
-    <a href="https://github.com/dinexh/ZeroShift-Engine" class="btn-ghost" target="_blank">View on GitHub</a>
+    <a href="https://github.com/dinexh/VersionGate" class="btn-ghost" target="_blank">View on GitHub</a>
   </div>
 
   <div class="terminal">
@@ -1037,7 +1037,7 @@
       <div class="dot dot-red"></div>
       <div class="dot dot-yellow"></div>
       <div class="dot dot-green"></div>
-      <span class="terminal-title">zeroshift — deploy log</span>
+      <span class="terminal-title">versiongate — deploy log</span>
       <button class="replay-btn" id="replay-btn" onclick="replayTerminal()">replay</button>
     </div>
     <div class="terminal-body" id="terminal-body">
@@ -1082,7 +1082,7 @@
       <div class="mock-sidebar">
         <div class="mock-logo">
           <div class="mock-logo-icon">Z</div>
-          <span class="mock-logo-text">ZeroShift</span>
+          <span class="mock-logo-text">VersionGate</span>
         </div>
         <div class="mock-nav-item active">◈ &nbsp;Overview</div>
         <div class="mock-nav-item">⟳ &nbsp;Deployments</div>
@@ -1190,7 +1190,7 @@
           <div class="step-content">
             <div class="step-title">Build image</div>
             <div class="step-desc">Runs docker build with the project's build context. Full stdout/stderr captured — build errors surface directly in the dashboard.</div>
-            <div class="step-code">docker build -t zeroshift-myapp:1740000000 ./myapp</div>
+            <div class="step-code">docker build -t versiongate-myapp:1740000000 ./myapp</div>
           </div>
         </div>
         <div class="deploy-step" data-step="3" onclick="setStep(3)">
@@ -1198,7 +1198,7 @@
           <div class="step-content">
             <div class="step-title">Start container</div>
             <div class="step-desc">Pre-cleans stale containers by name and frees the target port before starting. Injects project env vars.</div>
-            <div class="step-code">docker run -d --name myapp-green -p 3101:3000 zeroshift-myapp:...</div>
+            <div class="step-code">docker run -d --name myapp-green -p 3101:3000 versiongate-myapp:...</div>
           </div>
         </div>
         <div class="deploy-step" data-step="4" onclick="setStep(4)">
@@ -1275,7 +1275,7 @@
           <div class="step-content">
             <div class="step-title">Re-run old container</div>
             <div class="step-desc">Starts the previous image on its original port. If the image was pruned, rollback is aborted safely — the current deployment stays live.</div>
-            <div class="step-code">docker run -d --name myapp-blue -p 3100:3000 zeroshift-myapp:prev</div>
+            <div class="step-code">docker run -d --name myapp-blue -p 3100:3000 versiongate-myapp:prev</div>
           </div>
         </div>
         <div class="deploy-step">
@@ -1314,7 +1314,7 @@
     <div class="feature">
       <span class="feature-icon">⎇</span>
       <div class="feature-title">Git-native workflow</div>
-      <p class="feature-desc">Webhook triggers on push. ZeroShift clones or fetches your repo, checks out the configured branch, and deploys.</p>
+      <p class="feature-desc">Webhook triggers on push. VersionGate clones or fetches your repo, checks out the configured branch, and deploys.</p>
     </div>
     <div class="feature">
       <span class="feature-icon">⟳</span>
@@ -1329,7 +1329,7 @@
     <div class="feature">
       <span class="feature-icon">📄</span>
       <div class="feature-title">Auto Dockerfile</div>
-      <p class="feature-desc">No Dockerfile? ZeroShift generates one — detects Node.js, Bun, Python. Scans subdirectories. Regenerated each deploy, never overwrites yours.</p>
+      <p class="feature-desc">No Dockerfile? VersionGate generates one — detects Node.js, Bun, Python. Scans subdirectories. Regenerated each deploy, never overwrites yours.</p>
     </div>
     <div class="feature">
       <span class="feature-icon">⚡</span>
@@ -1349,7 +1349,7 @@
     <div class="feature">
       <span class="feature-icon">✦</span>
       <div class="feature-title">Automatic CI pipeline</div>
-      <p class="feature-desc">AI-generates a production GitHub Actions workflow for your project — detects runtime, caches deps, runs build &amp; test, then fires the ZeroShift webhook to deploy on every push.</p>
+      <p class="feature-desc">AI-generates a production GitHub Actions workflow for your project — detects runtime, caches deps, runs build &amp; test, then fires the VersionGate webhook to deploy on every push.</p>
     </div>
   </div>
 </section>
@@ -1358,7 +1358,7 @@
 
 <!-- ── COMPARISON ────────────────────────────────────────────────────────────── -->
 <section id="compare" class="reveal">
-  <p class="section-label">// why zeroshift</p>
+  <p class="section-label">// why versiongate</p>
   <h2>Simple, self-hosted, yours.</h2>
   <p class="section-sub">No vendor lock-in. No monthly bill for a deployment tool. Just your server, running your code.</p>
 
@@ -1366,7 +1366,7 @@
     <thead>
       <tr>
         <th>Feature</th>
-        <th class="hl">ZeroShift</th>
+        <th class="hl">VersionGate</th>
         <th>Heroku / Render</th>
         <th>Kubernetes</th>
         <th>Raw Docker</th>
@@ -1460,8 +1460,8 @@
             <span class="code-block-lang">bash</span>
             <button class="copy-btn" onclick="copyCode(this)">copy</button>
           </div>
-          <pre><span class="hl">git clone</span> https://github.com/dinexh/ZeroShift-Engine
-<span class="hl">cd</span> ZeroShift-Engine
+          <pre><span class="hl">git clone</span> https://github.com/dinexh/VersionGate
+<span class="hl">cd</span> VersionGate
 <span class="hl">bun install</span></pre>
         </div>
       </div>
@@ -1484,7 +1484,7 @@
 <span class="vr">PORT</span>=9090
 <span class="vr">DOCKER_NETWORK</span>=bridge
 <span class="vr">NGINX_CONFIG_PATH</span>=/etc/nginx/conf.d/upstream.conf
-<span class="vr">PROJECTS_ROOT_PATH</span>=/var/zeroshift/projects
+<span class="vr">PROJECTS_ROOT_PATH</span>=/var/versiongate/projects
 <span class="vr">GEMINI_API_KEY</span>=           <span class="cm"># for AI pipeline generation</span></pre>
         </div>
       </div>
@@ -1586,7 +1586,7 @@
         <tr><td>PORT</td><td>9090</td><td>API + dashboard port</td></tr>
         <tr><td>DOCKER_NETWORK</td><td>bridge</td><td>Docker network for containers</td></tr>
         <tr><td>NGINX_CONFIG_PATH</td><td>/etc/nginx/conf.d/upstream.conf</td><td>Nginx upstream file</td></tr>
-        <tr><td>PROJECTS_ROOT_PATH</td><td>/var/zeroshift/projects</td><td>Root dir for cloned repos</td></tr>
+        <tr><td>PROJECTS_ROOT_PATH</td><td>/var/versiongate/projects</td><td>Root dir for cloned repos</td></tr>
         <tr><td>GEMINI_API_KEY</td><td>—</td><td>Google AI Studio key (optional)</td></tr>
         <tr><td>GEMINI_MODEL</td><td>gemini-2.5-pro</td><td>Gemini model ID</td></tr>
         <tr><td>LOG_LEVEL</td><td>info</td><td>Pino log level</td></tr>
@@ -1643,13 +1643,13 @@
 <!-- ── FOOTER ─────────────────────────────────────────────────────────────────── -->
 <footer>
   <div class="footer-left">
-    <strong>ZeroShift Engine</strong> — self-hosted, zero-downtime deployments
+    <strong>VersionGate Engine</strong> — self-hosted, zero-downtime deployments
     <div style="margin-top:6px;font-size:11px;color:var(--muted);">
       Built with Bun · Fastify · Prisma · Docker · Nginx · Next.js
     </div>
   </div>
   <ul class="footer-links">
-    <li><a href="https://github.com/dinexh/ZeroShift-Engine" target="_blank">GitHub ↗</a></li>
+    <li><a href="https://github.com/dinexh/VersionGate" target="_blank">GitHub ↗</a></li>
     <li><a href="#how-it-works">How it works</a></li>
     <li><a href="#features">Features</a></li>
     <li><a href="#setup">Setup</a></li>
@@ -1664,12 +1664,12 @@
     { text: 'Enumerating objects: 5, done.', cls: 'term-muted' },
     { text: 'Writing objects: 100% (3/3), done.', cls: 'term-muted' },
     { text: '', cls: '' },
-    { text: 'ZeroShift ▸ webhook received [nithin]', cls: 'term-info' },
-    { text: 'ZeroShift ▸ pulling source...          ✓', cls: 'term-ok' },
-    { text: 'ZeroShift ▸ building image...          ✓', cls: 'term-ok' },
-    { text: 'ZeroShift ▸ starting nithin-green...   ✓', cls: 'term-ok' },
-    { text: 'ZeroShift ▸ switching traffic → :3101  ✓', cls: 'term-ok' },
-    { text: 'ZeroShift ▸ stopping nithin-blue...    ✓', cls: 'term-ok' },
+    { text: 'VersionGate ▸ webhook received [nithin]', cls: 'term-info' },
+    { text: 'VersionGate ▸ pulling source...          ✓', cls: 'term-ok' },
+    { text: 'VersionGate ▸ building image...          ✓', cls: 'term-ok' },
+    { text: 'VersionGate ▸ starting nithin-green...   ✓', cls: 'term-ok' },
+    { text: 'VersionGate ▸ switching traffic → :3101  ✓', cls: 'term-ok' },
+    { text: 'VersionGate ▸ stopping nithin-blue...    ✓', cls: 'term-ok' },
     { text: '', cls: '' },
     { text: 'nithin-green is live on :3101  [v2 · ACTIVE]', cls: 'term-prompt' },
   ];
@@ -1690,10 +1690,10 @@
     if (ci < text.length) {
       currentEl.textContent = text.slice(0, ci + 1);
       ci++;
-      setTimeout(tick, text.startsWith('ZeroShift') ? 18 : text.startsWith('$') ? 55 : 12);
+      setTimeout(tick, text.startsWith('VersionGate') ? 18 : text.startsWith('$') ? 55 : 12);
     } else {
       li++; ci = 0;
-      const delay = text === '' ? 80 : text.startsWith('$') ? 300 : text.startsWith('ZeroShift') ? 220 : 60;
+      const delay = text === '' ? 80 : text.startsWith('$') ? 300 : text.startsWith('VersionGate') ? 220 : 60;
       setTimeout(tick, delay);
     }
   }

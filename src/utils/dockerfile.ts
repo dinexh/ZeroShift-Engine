@@ -4,7 +4,7 @@ import { logger } from "./logger";
 
 // Marker written into auto-generated Dockerfiles so we know to regenerate them
 // on the next deploy. User-provided Dockerfiles won't have this line.
-const AUTO_GENERATED_MARKER = "# ZeroShift:auto-generated";
+const AUTO_GENERATED_MARKER = "# VersionGate:auto-generated";
 
 /**
  * Ensures a Dockerfile exists in the given build context directory.

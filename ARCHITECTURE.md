@@ -1,4 +1,4 @@
-# ZeroShift Engine — Architecture Diagram
+# VersionGate Engine — Architecture Diagram
 
 ## Deployment Pipeline
 
@@ -36,7 +36,7 @@
                     └────────┬─────────┘
                              │
                     ┌────────▼─────────┐
-                    │  docker build    │  imageTag = zeroshift-<name>:<ts>
+                    │  docker build    │  imageTag = versiongate-<name>:<ts>
                     └────────┬─────────┘
                              │
                     ┌────────▼─────────┐

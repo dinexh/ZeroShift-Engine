@@ -87,7 +87,7 @@ export class DeploymentService {
       const hostPort =
         newColor === DeploymentColor.BLUE ? project.basePort : project.basePort + 1;
       const containerName = `${project.name}-${newColor.toLowerCase()}`;
-      const imageTag = `zeroshift-${project.name}:${Date.now()}`;
+      const imageTag = `versiongate-${project.name}:${Date.now()}`;
       const version = await this.repo.getNextVersionForProject(projectId);
 
       logger.info(

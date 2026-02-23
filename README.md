@@ -1,6 +1,6 @@
-# ZeroShift Engine
+# VersionGate Engine
 
-Self-hosted zero-downtime deployment engine. Push to GitHub → ZeroShift pulls the source, builds a Docker image, spins up the new container, switches Nginx traffic, and tears down the old one — all without a single second of downtime.
+Self-hosted zero-downtime deployment engine. Push to GitHub → VersionGate pulls the source, builds a Docker image, spins up the new container, switches Nginx traffic, and tears down the old one — all without a single second of downtime.
 
 Built for single-server (KVM/VPS) setups where you want Vercel-style deployments on your own hardware.
 
@@ -10,17 +10,17 @@ Built for single-server (KVM/VPS) setups where you want Vercel-style deployments
 
 ### The Approach
 
-ZeroShift uses a **blue-green deployment** strategy. Every project gets two container slots — `blue` and `green` — running on adjacent ports. At any moment one slot is live (receiving traffic) and the other is idle. Each deploy targets the idle slot, so the live app is never touched until the new one is confirmed healthy.
+VersionGate uses a **blue-green deployment** strategy. Every project gets two container slots — `blue` and `green` — running on adjacent ports. At any moment one slot is live (receiving traffic) and the other is idle. Each deploy targets the idle slot, so the live app is never touched until the new one is confirmed healthy.
 
 ```
 Your Repo
     │
     │  git push  (or manual trigger)
     ▼
-ZeroShift Engine
+VersionGate Engine
     │
     ├── 1. Pull source         git fetch + reset to branch HEAD
-    ├── 2. Build image         docker build -t zeroshift-<name>:<ts> .
+    ├── 2. Build image         docker build -t versiongate-<name>:<ts> .
     ├── 3. Pick idle slot      BLUE (basePort) or GREEN (basePort+1)
     ├── 4. Start container     docker run -d -p <hostPort>:<appPort>
     ├── 5. Switch traffic      rewrite nginx upstream → new port → nginx -s reload
@@ -47,7 +47,7 @@ ACTIVE  → ROLLED_BACK               (after the next successful deploy)
 
 ### Auto-Deploy via Webhook
 
-Every project gets a unique webhook URL. Add it to your GitHub repo under **Settings → Webhooks** and ZeroShift will auto-deploy on every push to the configured branch.
+Every project gets a unique webhook URL. Add it to your GitHub repo under **Settings → Webhooks** and VersionGate will auto-deploy on every push to the configured branch.
 
 ```
 POST /api/v1/webhooks/<secret>
@@ -85,7 +85,7 @@ POST /api/v1/projects/:id/rollback
 ## Project Structure
 
 ```
-zeroshift-engine/
+versiongate-engine/
 ├── src/
 │   ├── server.ts                       Entry point + graceful shutdown + startup reconciliation
 │   ├── app.ts                          Fastify builder, error handler, static serving, SPA fallback
@@ -130,8 +130,8 @@ zeroshift-engine/
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/dinexh/ZeroShift-Engine
-cd ZeroShift-Engine
+git clone https://github.com/dinexh/VersionGate
+cd VersionGate
 ```
 
 ### 2. Install dependencies
@@ -146,7 +146,7 @@ Create a `.env` file at the repo root:
 
 ```env
 # Required
-DATABASE_URL=postgresql://user:password@localhost:5432/zeroshift
+DATABASE_URL=postgresql://user:password@localhost:5432/versiongate
 # Or Neon:
 # DATABASE_URL=postgresql://user:pass@ep-xxx.neon.tech/neondb?sslmode=require&channel_binding=require
 
@@ -155,7 +155,7 @@ PORT=9090
 LOG_LEVEL=info
 DOCKER_NETWORK=bridge
 NGINX_CONFIG_PATH=/etc/nginx/conf.d/upstream.conf
-PROJECTS_ROOT_PATH=/var/zeroshift/projects
+PROJECTS_ROOT_PATH=/var/versiongate/projects
 GEMINI_API_KEY=             # for AI CI pipeline generation (optional)
 ```
 
@@ -234,7 +234,7 @@ Or just click **Deploy** in the dashboard.
 | `PORT` | No | `9090` | API + dashboard server port |
 | `DOCKER_NETWORK` | No | `bridge` | Docker network for containers |
 | `NGINX_CONFIG_PATH` | No | `/etc/nginx/conf.d/upstream.conf` | Nginx upstream file path |
-| `PROJECTS_ROOT_PATH` | No | `/var/zeroshift/projects` | Root dir for cloned repos |
+| `PROJECTS_ROOT_PATH` | No | `/var/versiongate/projects` | Root dir for cloned repos |
 | `MONIX_PATH` | No | `/opt/monix` | Path to Monix binary (server stats) |
 | `MONIX_PORT` | No | `3030` | Monix metrics port |
 | `GEMINI_API_KEY` | No | — | Google AI Studio key for CI pipeline generation |
