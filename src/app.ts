@@ -1,7 +1,7 @@
 import Fastify, { FastifyInstance } from "fastify";
 import { join } from "path";
 import { existsSync } from "fs";
-import { config } from "./config/env";
+import { config, isConfigured } from "./config/env";
 import { logger } from "./utils/logger";
 import { AppError } from "./utils/errors";
 import { deploymentRoutes } from "./routes/deployment.routes";
@@ -9,6 +9,7 @@ import { projectRoutes } from "./routes/project.routes";
 import { systemRoutes } from "./routes/system.routes";
 import { metricsRoutes } from "./routes/metrics.routes";
 import { webhookRoutes } from "./routes/webhook.routes";
+import { setupRoutes } from "./routes/setup.routes";
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -63,12 +64,36 @@ export async function buildApp(): Promise<FastifyInstance> {
     return reply.code(200).send({ status: "ok", timestamp: new Date().toISOString() });
   });
 
+  // ── Setup routes (always registered so the wizard can work) ────────────────
+  await app.register(setupRoutes, { prefix: "/api/v1" });
+
+  // ── If not configured, intercept all non-setup requests ─────────────────
+  if (!isConfigured()) {
+    logger.warn("DATABASE_URL not set — running in setup mode. Visit /setup to configure.");
+    app.addHook("onRequest", async (req, reply) => {
+      const url = req.url;
+      if (
+        url.startsWith("/api/v1/setup") ||
+        url === "/health" ||
+        (req.method === "GET" && url.startsWith("/setup"))
+      ) return;
+      if (req.method === "GET" && !url.startsWith("/api/")) {
+        return reply.redirect("/setup");
+      }
+      if (url.startsWith("/api/")) {
+        return reply.code(503).send({ error: "SetupRequired", message: "Engine is not configured. Complete setup at /setup." });
+      }
+    });
+  }
+
   // ── API Routes (registered before static — order matters) ──────────────────
-  await app.register(deploymentRoutes, { prefix: "/api/v1" });
-  await app.register(projectRoutes, { prefix: "/api/v1" });
-  await app.register(systemRoutes, { prefix: "/api/v1" });
-  await app.register(metricsRoutes, { prefix: "/api/v1" });
-  await app.register(webhookRoutes, { prefix: "/api/v1" });
+  if (isConfigured()) {
+    await app.register(deploymentRoutes, { prefix: "/api/v1" });
+    await app.register(projectRoutes, { prefix: "/api/v1" });
+    await app.register(systemRoutes, { prefix: "/api/v1" });
+    await app.register(metricsRoutes, { prefix: "/api/v1" });
+    await app.register(webhookRoutes, { prefix: "/api/v1" });
+  }
 
   // ── Dashboard static serving ────────────────────────────────────────────────
   const dashboardPath = join(process.cwd(), "dashboard", "out");

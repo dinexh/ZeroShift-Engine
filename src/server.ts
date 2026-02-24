@@ -1,5 +1,5 @@
 import { buildApp } from "./app";
-import { config } from "./config/env";
+import { config, isConfigured } from "./config/env";
 import { logger } from "./utils/logger";
 import prisma from "./prisma/client";
 import { ReconciliationService } from "./services/reconciliation.service";
@@ -24,25 +24,33 @@ async function start(): Promise<void> {
   process.on("SIGTERM", () => shutdown("SIGTERM"));
 
   try {
-    // Run reconciliation before accepting requests — cleans up any crashed deploys
-    const reconciliation = new ReconciliationService();
-    const report = await reconciliation.reconcile();
-    logger.info(report, "Startup reconciliation complete");
-
     const PORT = config.port || 9090;
+
+    if (isConfigured()) {
+      // Run reconciliation before accepting requests — cleans up any crashed deploys
+      const reconciliation = new ReconciliationService();
+      const report = await reconciliation.reconcile();
+      logger.info(report, "Startup reconciliation complete");
+    }
+
     await app.listen({ port: PORT, host: "0.0.0.0" });
     logger.info(
       {
         port: PORT,
-        dockerNetwork: config.dockerNetwork,
-        nginxConfigPath: config.nginxConfigPath,
-        projectsRootPath: config.projectsRootPath,
+        mode: isConfigured() ? "normal" : "setup",
+        ...(isConfigured() ? {
+          dockerNetwork: config.dockerNetwork,
+          nginxConfigPath: config.nginxConfigPath,
+          projectsRootPath: config.projectsRootPath,
+        } : { setupUrl: `http://0.0.0.0:${PORT}/setup` }),
       },
       "VersionGate Engine is running"
     );
 
-    monitor.start();
-    systemMetrics.start();
+    if (isConfigured()) {
+      monitor.start();
+      systemMetrics.start();
+    }
   } catch (err) {
     logger.fatal({ err }, "Failed to start server");
     await prisma.$disconnect();

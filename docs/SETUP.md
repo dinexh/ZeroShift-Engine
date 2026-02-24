@@ -4,26 +4,61 @@
 
 - [Bun](https://bun.sh) ≥ 1.0
 - Docker (running)
-- Nginx (installed, writable config at `/etc/nginx/conf.d/`)
-- PostgreSQL — local or [Neon](https://neon.tech) (free tier works)
+- Nginx (installed)
+- PostgreSQL — local, bundled via docker-compose, or [Neon](https://neon.tech) (free tier works)
+- PM2 (`npm i -g pm2`) — optional, falls back to nohup
 - Git
 
 ---
 
-## 1. Clone the repo
+## One-command setup
+
+Clone the repo and run the setup script — it handles everything including Nginx, the dashboard build, DB schema push, and PM2:
 
 ```bash
 git clone https://github.com/dinexh/VersionGate
 cd VersionGate
+sudo bash setup.sh
 ```
 
-## 2. Install dependencies
+The script will ask you for:
+1. **Domain or IP** — e.g. `versiongate.example.com` or `1.2.3.4`
+2. **PostgreSQL connection string** — leave blank to use the bundled docker-compose Postgres
+3. **Gemini API key** — optional, for AI CI pipeline generation
+4. **HTTPS** — if a real domain is detected, certbot is offered automatically
+
+After it completes, the dashboard is live at `http(s)://your-domain-or-ip`.
+
+---
+
+## What the script does
+
+| Step | Action |
+|------|--------|
+| 1 | Writes `.env` from your input |
+| 2 | Optionally starts bundled Postgres via docker-compose |
+| 3 | `bun install` + `bunx prisma db push` |
+| 4 | Builds Next.js dashboard (`dashboard/out/`) |
+| 5 | Creates `/var/versiongate/projects` |
+| 6 | Writes Nginx reverse-proxy config → reloads Nginx |
+| 7 | Optionally runs `certbot` for HTTPS |
+| 8 | Starts the engine via PM2 (or nohup as fallback) |
+
+---
+
+## Manual setup (alternative)
+
+If you prefer to set things up yourself:
+
+### 1. Clone & install
 
 ```bash
+git clone https://github.com/dinexh/VersionGate
+cd VersionGate
 bun install
 ```
 
-## 3. Configure environment
+### 2. Configure environment
 
 Create a `.env` file at the repo root:
 
@@ -37,31 +72,49 @@ DATABASE_URL=postgresql://user:password@localhost:5432/versiongate
 PORT=9090
 LOG_LEVEL=info
 DOCKER_NETWORK=bridge
-NGINX_CONFIG_PATH=/etc/nginx/conf.d/upstream.conf
+NGINX_CONFIG_PATH=/etc/nginx/conf.d/vg-upstreams.conf
 PROJECTS_ROOT_PATH=/var/versiongate/projects
 GEMINI_API_KEY=             # for AI CI pipeline generation (optional)
 ```
 
-## 4. Push the database schema
+### 3. Push the database schema
 
 ```bash
 bunx prisma db push
 ```
 
-> First time only. Re-run after any `schema.prisma` changes.
-
-## 5. Build the dashboard
+### 4. Build the dashboard
 
 ```bash
-cd dashboard
-bun install
-bun run build
-cd ..
+cd dashboard && bun install && bun run build && cd ..
 ```
 
-The static output goes to `dashboard/out/` — Fastify serves it automatically.
+### 5. Nginx reverse proxy
 
-## 6. Start the engine
+Create `/etc/nginx/sites-available/versiongate`:
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain-or-ip;
+
+    location / {
+        proxy_pass         http://127.0.0.1:9090;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+```bash
+ln -s /etc/nginx/sites-available/versiongate /etc/nginx/sites-enabled/
+nginx -t && nginx -s reload
+```
+
+### 6. Start the engine
 
 **Development (watch mode):**
 ```bash
@@ -73,9 +126,6 @@ bun --watch src/server.ts
 pm2 start ecosystem.config.cjs
 pm2 save
 ```
-
-The engine starts at `http://localhost:9090`.
-Open the dashboard at `http://localhost:9090`.
 
 ---
 

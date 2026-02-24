@@ -2,23 +2,17 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-function requireEnv(key: string): string {
-  const value = process.env[key];
-  if (!value) {
-    console.error(`[VersionGate] FATAL: Missing required environment variable: ${key}`);
-    process.exit(1);
-  }
-  return value;
-}
-
 function optionalEnv(key: string, fallback: string): string {
   return process.env[key] ?? fallback;
 }
 
+// Whether the engine has been configured (DATABASE_URL present)
+export const isConfigured = (): boolean => !!process.env.DATABASE_URL;
+
 export const config = {
   port: parseInt(optionalEnv("PORT", "9090"), 10) || 9090,
   logLevel: optionalEnv("LOG_LEVEL", "info"),
-  databaseUrl: requireEnv("DATABASE_URL"),
+  databaseUrl: optionalEnv("DATABASE_URL", ""),
   dockerNetwork: optionalEnv("DOCKER_NETWORK", "versiongate-net"),
   nginxConfigPath: optionalEnv("NGINX_CONFIG_PATH", "/etc/nginx/conf.d/upstream.conf"),
   projectsRootPath: optionalEnv("PROJECTS_ROOT_PATH", "/var/versiongate/projects"),

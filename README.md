@@ -28,7 +28,19 @@ Built for single-server (KVM/VPS) setups where you want Vercel-style deployments
 
 ---
 
+## Quick Start
+
+```bash
+git clone https://github.com/dinexh/VersionGate
+cd VersionGate
+sudo bash setup.sh
+```
+
+The script asks for your domain/IP and database URL, then wires up Nginx, builds the dashboard, pushes the schema, and starts the engine via PM2. Optional HTTPS via certbot if a domain is detected.
+
+---
+
 ## Docs
 
 - [Architecture](docs/ARCHITECTURE.md) — deployment pipeline, blue-green state diagrams, rollback flow, crash recovery
-- [Setup & API](docs/SETUP.md) — local setup, environment variables, full API reference
+- [Setup & API](docs/SETUP.md) — setup script, manual setup, environment variables, full API reference
