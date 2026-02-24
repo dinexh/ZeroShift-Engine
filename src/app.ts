@@ -71,11 +71,15 @@ export async function buildApp(): Promise<FastifyInstance> {
   if (!isConfigured()) {
     logger.warn("DATABASE_URL not set — running in setup mode. Visit /setup to configure.");
     app.addHook("onRequest", async (req, reply) => {
-      const url = req.url;
+      const url = req.url.split("?")[0];
+      // Allow: setup API, health, setup page, and ALL static assets
       if (
         url.startsWith("/api/v1/setup") ||
         url === "/health" ||
-        (req.method === "GET" && url.startsWith("/setup"))
+        url.startsWith("/setup") ||
+        url.startsWith("/_next/") ||
+        url.startsWith("/favicon") ||
+        url.match(/\.(css|js|woff2?|ttf|svg|png|ico|webp|map)$/)
       ) return;
       if (req.method === "GET" && !url.startsWith("/api/")) {
         return reply.redirect("/setup");

@@ -30,17 +30,39 @@ Built for single-server (KVM/VPS) setups where you want Vercel-style deployments
 
 ## Quick Start
 
+### Prerequisites
+
+- [Bun](https://bun.sh) ≥ 1.0
+- Docker (running)
+- Nginx (installed)
+- PostgreSQL — local or [Neon](https://neon.tech) free tier
+- PM2 — `npm i -g pm2`
+
+### 1. Clone & install
+
 ```bash
 git clone https://github.com/dinexh/VersionGate
 cd VersionGate
-sudo bash setup.sh
+bun install
+cd dashboard && bun install && bun run build && cd ..
 ```
 
-The script asks for your domain/IP and database URL, then wires up Nginx, builds the dashboard, pushes the schema, and starts the engine via PM2. Optional HTTPS via certbot if a domain is detected.
+### 2. Start the engine
+
+```bash
+pm2 start ecosystem.config.cjs
+pm2 save
+```
+
+### 3. Open the setup wizard
+
+Navigate to `http://your-server-ip:9090/setup` in your browser.
+
+Fill in your **domain**, **PostgreSQL connection string**, and optional **Gemini API key** — the wizard writes the config, migrates the database, and configures Nginx automatically. The engine restarts itself and redirects you to the dashboard.
 
 ---
 
 ## Docs
 
+- [Setup & API](docs/SETUP.md) — detailed setup, environment variables, full API reference
 - [Architecture](docs/ARCHITECTURE.md) — deployment pipeline, blue-green state diagrams, rollback flow, crash recovery
-- [Setup & API](docs/SETUP.md) — setup script, manual setup, environment variables, full API reference
