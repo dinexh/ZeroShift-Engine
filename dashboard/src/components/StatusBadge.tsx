@@ -1,7 +1,7 @@
 import type { DeploymentStatus, DeploymentColor } from "@/lib/api";
 
 const STATUS_STYLES: Record<DeploymentStatus, string> = {
-  ACTIVE:      "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
+  ACTIVE:      "bg-indigo-500/15 text-indigo-400 border border-indigo-500/30",
   DEPLOYING:   "bg-amber-500/15 text-amber-400 border border-amber-500/30 animate-pulse",
   FAILED:      "bg-red-500/15 text-red-400 border border-red-500/30",
   ROLLED_BACK: "bg-zinc-500/15 text-zinc-400 border border-zinc-500/30",
@@ -10,7 +10,7 @@ const STATUS_STYLES: Record<DeploymentStatus, string> = {
 
 const COLOR_STYLES: Record<DeploymentColor, string> = {
   BLUE:  "bg-blue-500/15 text-blue-400 border border-blue-500/30",
-  GREEN: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
+  GREEN: "bg-indigo-500/15 text-indigo-400 border border-indigo-500/30",
 };
 
 export function StatusBadge({ status }: { status: DeploymentStatus }) {
@@ -34,11 +34,11 @@ export function RunningDot({ running }: { running: boolean }) {
     <span className="flex items-center gap-1.5 text-xs">
       <span className="relative flex h-2 w-2">
         {running && (
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-60" />
         )}
-        <span className={`relative inline-flex rounded-full h-2 w-2 ${running ? "bg-emerald-400" : "bg-red-500"}`} />
+        <span className={`relative inline-flex rounded-full h-2 w-2 ${running ? "bg-indigo-400" : "bg-red-500"}`} />
       </span>
-      <span className={running ? "text-emerald-400" : "text-red-400"}>
+      <span className={running ? "text-indigo-400" : "text-red-400"}>
         {running ? "Running" : "Stopped"}
       </span>
     </span>

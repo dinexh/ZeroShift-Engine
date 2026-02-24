@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import { Poppins, JetBrains_Mono } from 'next/font/google';
 import styles from './landing.module.css';
 
-const inter = Inter({ subsets: ['latin'] });
+const poppins = Poppins({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-poppins' });
 const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' });
 
 const TERMINAL_LINES = [
@@ -138,9 +138,9 @@ export default function LandingClient() {
     addLog(`▸ starting myapp-${next} on ${port}`, '#a1a1a1'); await wait(500);
     setSimState(next === 'green' ? 'green-live' : 'blue-live');
     await wait(300);
-    addLog(`✓ traffic → myapp-${next} ${port}`, '#22c55e'); await wait(300);
-    addLog(`✓ myapp-${next === 'green' ? 'blue' : 'green'} stopped`, '#22c55e'); await wait(200);
-    addLog(`✓ deploy complete — v${next === 'green' ? 2 : 3} active`, '#22c55e');
+    addLog(`✓ traffic → myapp-${next} ${port}`, '#818cf8'); await wait(300);
+    addLog(`✓ myapp-${next === 'green' ? 'blue' : 'green'} stopped`, '#818cf8'); await wait(200);
+    addLog(`✓ deploy complete — v${next === 'green' ? 2 : 3} active`, '#818cf8');
     setSimRunning(false);
   };
 
@@ -179,7 +179,7 @@ export default function LandingClient() {
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div className={`${styles.page} ${inter.className} ${mono.variable}`}>
+    <div className={`${styles.page} ${poppins.variable} ${mono.variable}`}>
 
       {/* ── NAV ── */}
       <nav className={styles.nav}>
@@ -276,7 +276,7 @@ export default function LandingClient() {
               <div className={styles.mockStatsRow}>
                 {[
                   { num: '4', label: 'Projects',  color: '#ededed' },
-                  { num: '4', label: 'Running',   color: '#34d399' },
+                  { num: '4', label: 'Running',   color: '#818cf8' },
                   { num: '0', label: 'Failed',    color: '#52525b' },
                   { num: '0', label: 'Deploying', color: '#52525b' },
                 ].map(({ num, label, color }) => (
@@ -363,7 +363,7 @@ export default function LandingClient() {
           <div className={`${styles.flowPanel} ${activeTab === 'bluegreen' ? styles.active : ''}`}>
             <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 20, lineHeight: 1.7 }}>
               Each project has two container slots — <span style={{ color: '#3b82f6', fontWeight: 600 }}>BLUE</span> on{' '}
-              <code>basePort</code> and <span style={{ color: '#22c55e', fontWeight: 600 }}>GREEN</span> on{' '}
+              <code>basePort</code> and <span style={{ color: '#818cf8', fontWeight: 600 }}>GREEN</span> on{' '}
               <code>basePort+1</code>. One is always live. Every deploy targets the idle one. Click the buttons to simulate.
             </p>
             <div className={styles.bgViz}>
@@ -388,7 +388,7 @@ export default function LandingClient() {
             </div>
             <div className={styles.trafficArrow}>
               nginx upstream →{' '}
-              <span className={styles.trafficTo} style={{ color: blueLive ? '#3b82f6' : '#22c55e' }}>
+              <span className={styles.trafficTo} style={{ color: blueLive ? '#3b82f6' : '#818cf8' }}>
                 localhost:{blueLive ? '3100 (blue)' : '3101 (green)'}
               </span>
             </div>

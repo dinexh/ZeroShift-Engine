@@ -25,7 +25,7 @@ function DeploymentPieChart({ deployments }: { deployments: Deployment[] }) {
     .map(([name, value]) => ({ name, value }));
 
   const COLORS: Record<string, string> = {
-    ACTIVE: "#34d399", FAILED: "#f87171", ROLLED_BACK: "#71717a",
+    ACTIVE: "#818cf8", FAILED: "#f87171", ROLLED_BACK: "#71717a",
     DEPLOYING: "#fbbf24", PENDING: "#52525b",
   };
 
@@ -74,7 +74,7 @@ function DeploymentsPerProjectChart({ projects, deployments }: { projects: Proje
       <YAxis tick={{ fontSize: 10, fill: "#52525b" }} tickLine={false} axisLine={false} allowDecimals={false} />
       <Tooltip contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 6, fontSize: 11 }} formatter={(v: number) => [v, "Deployments"]} />
       <Bar dataKey="count" radius={[4, 4, 0, 0]} isAnimationActive={false}>
-        {data.map((entry, i) => <Cell key={i} fill={entry.active > 0 ? "#34d399" : "#52525b"} />)}
+        {data.map((entry, i) => <Cell key={i} fill={entry.active > 0 ? "#818cf8" : "#52525b"} />)}
       </Bar>
     </BarChart>
   );
@@ -94,7 +94,7 @@ function StatMeter({ label, value }: { label: string; value: number }) {
   const color =
     value >= 90 ? "bg-red-500" :
     value >= 70 ? "bg-amber-500" :
-    "bg-emerald-500";
+    "bg-indigo-500";
   return (
     <div>
       <div className="flex justify-between text-xs mb-1">
@@ -204,7 +204,7 @@ export default function OverviewPage() {
             <div className="grid grid-cols-2 gap-3">
               {[
                 { label: "Projects",   value: projects.length,   color: "text-zinc-200" },
-                { label: "Running",    value: runningCount,      color: "text-emerald-400" },
+                { label: "Running",    value: runningCount,      color: "text-indigo-400" },
                 { label: "Failed",     value: failedCount,       color: failedCount > 0 ? "text-red-400" : "text-zinc-600" },
                 { label: "Deploying",  value: deployingCount,    color: deployingCount > 0 ? "text-amber-400" : "text-zinc-600" },
               ].map(({ label, value, color }) => (
@@ -353,8 +353,8 @@ export default function OverviewPage() {
                         )}
                         {isRunning && (
                           <span className="relative flex h-1.5 w-1.5">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
+                            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-indigo-400" />
                           </span>
                         )}
                         {isDeploying && (
@@ -414,7 +414,7 @@ export default function OverviewPage() {
                 d.status === "ROLLED_BACK" ? "⟳" :
                 d.status === "DEPLOYING"   ? "◌" : "·";
               const iconColor =
-                d.status === "ACTIVE"      ? "text-emerald-400" :
+                d.status === "ACTIVE"      ? "text-indigo-400" :
                 d.status === "FAILED"      ? "text-red-400" :
                 d.status === "ROLLED_BACK" ? "text-zinc-500" :
                 d.status === "DEPLOYING"   ? "text-amber-400" : "text-zinc-600";
@@ -436,7 +436,7 @@ export default function OverviewPage() {
                       <span className="text-zinc-200 font-medium">{proj?.name ?? d.projectId.slice(0, 8)}</span>
                       <span className="text-zinc-500"> {action} </span>
                       <span className="text-zinc-400 font-mono">v{d.version}</span>
-                      <span className={`ml-1.5 font-mono text-[10px] ${d.color === "BLUE" ? "text-blue-400" : "text-emerald-400"}`}>
+                      <span className={`ml-1.5 font-mono text-[10px] ${d.color === "BLUE" ? "text-blue-400" : "text-indigo-400"}`}>
                         {d.color}
                       </span>
                     </p>
