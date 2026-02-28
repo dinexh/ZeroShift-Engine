@@ -207,6 +207,10 @@ mkdir -p /var/log/versiongate
 mkdir -p /var/versiongate/projects
 
 # ─── Write Nginx config ────────────────────────────────────────────────────────
+# Remove Ubuntu's default site — it claims default_server on port 80 and
+# conflicts with our config.
+rm -f /etc/nginx/sites-enabled/default
+
 info "Writing Nginx configuration…"
 cat > /etc/nginx/conf.d/versiongate.conf <<NGINX
 server {
