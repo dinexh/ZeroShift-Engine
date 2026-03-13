@@ -1,31 +1,40 @@
+import { Badge } from "@/components/ui/badge";
 import type { DeploymentStatus, DeploymentColor } from "@/lib/api";
 
-const STATUS_STYLES: Record<DeploymentStatus, string> = {
-  ACTIVE:      "bg-indigo-500/15 text-indigo-400 border border-indigo-500/30",
-  DEPLOYING:   "bg-amber-500/15 text-amber-400 border border-amber-500/30 animate-pulse",
-  FAILED:      "bg-red-500/15 text-red-400 border border-red-500/30",
-  ROLLED_BACK: "bg-zinc-500/15 text-zinc-400 border border-zinc-500/30",
-  PENDING:     "bg-zinc-500/15 text-zinc-400 border border-zinc-500/30",
+const STATUS_VARIANT: Record<DeploymentStatus, "active" | "deploying" | "failed" | "rolled_back" | "pending"> = {
+  ACTIVE:      "active",
+  DEPLOYING:   "deploying",
+  FAILED:      "failed",
+  ROLLED_BACK: "rolled_back",
+  PENDING:     "pending",
 };
 
-const COLOR_STYLES: Record<DeploymentColor, string> = {
-  BLUE:  "bg-blue-500/15 text-blue-400 border border-blue-500/30",
-  GREEN: "bg-indigo-500/15 text-indigo-400 border border-indigo-500/30",
+const COLOR_VARIANT: Record<DeploymentColor, "blue" | "green"> = {
+  BLUE:  "blue",
+  GREEN: "green",
+};
+
+const STATUS_LABEL: Record<DeploymentStatus, string> = {
+  ACTIVE:      "Active",
+  DEPLOYING:   "Deploying",
+  FAILED:      "Failed",
+  ROLLED_BACK: "Rolled Back",
+  PENDING:     "Pending",
 };
 
 export function StatusBadge({ status }: { status: DeploymentStatus }) {
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${STATUS_STYLES[status] ?? ""}`}>
-      {status}
-    </span>
+    <Badge variant={STATUS_VARIANT[status] ?? "outline"}>
+      {STATUS_LABEL[status] ?? status}
+    </Badge>
   );
 }
 
 export function ColorBadge({ color }: { color: DeploymentColor }) {
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${COLOR_STYLES[color] ?? ""}`}>
+    <Badge variant={COLOR_VARIANT[color] ?? "outline"}>
       {color}
-    </span>
+    </Badge>
   );
 }
 

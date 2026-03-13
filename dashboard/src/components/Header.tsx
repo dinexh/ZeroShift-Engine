@@ -2,6 +2,8 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { CommandPalette } from "./CommandPalette";
 
 const PAGE_TITLES: Record<string, string> = {
@@ -28,7 +30,6 @@ export function Header() {
   const crumbs = getBreadcrumbs(pathname);
   const [paletteOpen, setPaletteOpen] = useState(false);
 
-  // Global Cmd+K / Ctrl+K listener
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -42,37 +43,35 @@ export function Header() {
 
   return (
     <>
-      <header className="h-14 shrink-0 border-b border-zinc-800 flex items-center px-6 gap-4 bg-zinc-950">
+      <header className="h-14 shrink-0 border-b border-border flex items-center px-6 gap-4 bg-background">
         <nav className="flex items-center gap-1.5 text-sm">
           {crumbs.map((crumb, i) => (
             <span key={i} className="flex items-center gap-1.5">
-              {i > 0 && <span className="text-zinc-700">/</span>}
+              {i > 0 && <span className="text-muted-foreground/40">/</span>}
               {crumb.href ? (
-                <Link href={crumb.href} className="text-zinc-500 hover:text-zinc-300 transition-colors">
+                <Link href={crumb.href} className="text-muted-foreground hover:text-foreground transition-colors">
                   {crumb.label}
                 </Link>
               ) : (
-                <span className="text-zinc-200 font-medium">{crumb.label}</span>
+                <span className="text-foreground font-medium">{crumb.label}</span>
               )}
             </span>
           ))}
         </nav>
 
         <div className="ml-auto flex items-center gap-3">
-          {/* Search / Command Palette trigger */}
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setPaletteOpen(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-800/60 border border-zinc-700/60 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600 transition-colors text-xs"
+            className="gap-2 text-muted-foreground border-border h-8 px-3 text-xs"
           >
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <circle cx="7" cy="7" r="5" />
-              <path d="M11 11l3 3" strokeLinecap="round" />
-            </svg>
+            <Search className="w-3 h-3" />
             <span className="hidden sm:inline">Search</span>
-            <kbd className="hidden sm:inline text-[10px] text-zinc-600 border border-zinc-700 rounded px-1">⌘K</kbd>
-          </button>
+            <kbd className="hidden sm:inline text-[10px] text-muted-foreground/60 border border-border rounded px-1">⌘K</kbd>
+          </Button>
 
-          <span className="text-xs text-zinc-700 hidden md:inline">
+          <span className="text-xs text-muted-foreground hidden md:inline">
             {PAGE_TITLES[pathname] ?? "VersionGate"}
           </span>
         </div>
