@@ -10,8 +10,8 @@ export const metadata: Metadata = {
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <div className="flex h-screen overflow-hidden bg-zinc-950">
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="flex h-screen overflow-hidden bg-background">
         <Sidebar />
         <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
           <Header />
@@ -22,9 +22,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         position="bottom-right"
         toastOptions={{
           style: {
-            background: "#18181b",
-            color: "#f4f4f5",
-            border: "1px solid #3f3f46",
+            background: "#0a0a0a",
+            color: "#fafafa",
+            border: "1px solid #262626",
+            fontFamily: "var(--font-poppins)",
+            fontSize: "13px",
           },
         }}
       />

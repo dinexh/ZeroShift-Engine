@@ -1,17 +1,17 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { Search, Loader2, LayoutDashboard, Rocket, Server, ChevronRight } from "lucide-react";
 import { api, type Project } from "@/lib/api";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
-interface Props {
-  open: boolean;
-  onClose: () => void;
-}
+interface Props { open: boolean; onClose: () => void; }
 
 const QUICK_ACTIONS = [
-  { id: "nav-overview",     label: "Overview",        description: "Go to dashboard overview",   href: "/" },
-  { id: "nav-deployments",  label: "All Deployments", description: "View all deployments table", href: "/deployments" },
-  { id: "nav-server",       label: "Server Metrics",  description: "Live server CPU / memory",   href: "/server" },
+  { id: "nav-overview",    label: "Overview",        description: "Go to dashboard overview",   href: "/",            icon: LayoutDashboard },
+  { id: "nav-deployments", label: "All Deployments", description: "View all deployments table", href: "/deployments", icon: Rocket },
+  { id: "nav-server",      label: "Server Metrics",  description: "Live server CPU / memory",   href: "/server",      icon: Server },
 ];
 
 type ResultItem = {
@@ -30,162 +30,96 @@ export function CommandPalette({ open, onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Keep refs to avoid stale closures in the keydown handler
   const selectedRef = useRef(0);
   const resultsRef = useRef<ResultItem[]>([]);
 
-  // Fetch projects when the palette opens
   useEffect(() => {
-    if (!open) {
-      setQuery("");
-      setSelected(0);
-      return;
-    }
-    setTimeout(() => inputRef.current?.focus(), 10);
+    if (!open) { setQuery(""); setSelected(0); return; }
+    setTimeout(() => inputRef.current?.focus(), 50);
     setLoading(true);
-    api.projects
-      .list()
-      .then(({ projects: p }) => setProjects(p))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    api.projects.list().then(({ projects: p }) => setProjects(p)).catch(() => {}).finally(() => setLoading(false));
   }, [open]);
 
-  // Build filtered result list
   const q = query.toLowerCase();
-  const filteredProjects = projects.filter(
-    (p) => p.name.toLowerCase().includes(q) || p.repoUrl.toLowerCase().includes(q)
-  );
-  const filteredActions = QUICK_ACTIONS.filter(
-    (a) => a.label.toLowerCase().includes(q) || a.description.toLowerCase().includes(q)
-  );
+  const filteredProjects = projects.filter(p => p.name.toLowerCase().includes(q) || p.repoUrl.toLowerCase().includes(q));
+  const filteredActions = QUICK_ACTIONS.filter(a => a.label.toLowerCase().includes(q) || a.description.toLowerCase().includes(q));
   const allResults: ResultItem[] = [
-    ...filteredProjects.map((p) => ({
-      type: "project" as const,
-      id: p.id,
-      label: p.name,
-      description: p.repoUrl,
-      href: `/projects/${p.id}`,
-      avatar: p.name[0]?.toUpperCase(),
-    })),
-    ...filteredActions.map((a) => ({
-      type: "action" as const,
-      id: a.id,
-      label: a.label,
-      description: a.description,
-      href: a.href,
-    })),
+    ...filteredProjects.map(p => ({ type: "project" as const, id: p.id, label: p.name, description: p.repoUrl, href: `/projects/${p.id}`, avatar: p.name[0]?.toUpperCase() })),
+    ...filteredActions.map(a => ({ type: "action" as const, id: a.id, label: a.label, description: a.description, href: a.href })),
   ];
 
-  // Keep refs in sync every render
   selectedRef.current = selected;
   resultsRef.current = allResults;
 
-  // Clamp selected when list shrinks
-  useEffect(() => {
-    setSelected((s) => Math.min(s, Math.max(0, allResults.length - 1)));
-  }, [allResults.length]);
+  useEffect(() => { setSelected(s => Math.min(s, Math.max(0, allResults.length - 1))); }, [allResults.length]);
+  useEffect(() => { setSelected(0); }, [query]);
 
-  // Reset selected on query change
-  useEffect(() => {
-    setSelected(0);
-  }, [query]);
-
-  // Keyboard navigation (stable handler via refs)
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        setSelected((s) => Math.min(s + 1, resultsRef.current.length - 1));
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        setSelected((s) => Math.max(s - 1, 0));
-      } else if (e.key === "Enter") {
+      if (e.key === "ArrowDown") { e.preventDefault(); setSelected(s => Math.min(s + 1, resultsRef.current.length - 1)); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); setSelected(s => Math.max(s - 1, 0)); }
+      else if (e.key === "Enter") {
         const item = resultsRef.current[selectedRef.current];
-        if (item) {
-          router.push(item.href);
-          onClose();
-        }
-      } else if (e.key === "Escape") {
-        onClose();
+        if (item) { router.push(item.href); onClose(); }
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, router, onClose]);
 
-  if (!open) return null;
-
-  function navigate(href: string) {
-    router.push(href);
-    onClose();
-  }
+  function navigate(href: string) { router.push(href); onClose(); }
 
   return (
-    <div
-      className="fixed inset-0 z-[200] flex items-start justify-center pt-[18vh] bg-black/70 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-[540px] bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <Dialog open={open} onOpenChange={v => { if (!v) onClose(); }}>
+      <DialogContent className="p-0 max-w-[540px] overflow-hidden gap-0 top-[25%] translate-y-0 [&>button]:hidden">
         {/* Search bar */}
-        <div className="flex items-center gap-3 px-4 border-b border-zinc-800">
-          <svg className="text-zinc-500 shrink-0" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <circle cx="7" cy="7" r="5" />
-            <path d="M11 11l3 3" strokeLinecap="round" />
-          </svg>
+        <div className="flex items-center gap-3 px-4 border-b border-border">
+          <Search className="w-4 h-4 text-muted-foreground/50 shrink-0" />
           <input
             ref={inputRef}
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={e => setQuery(e.target.value)}
             placeholder="Search projects and pages..."
-            className="flex-1 bg-transparent py-4 text-sm text-zinc-200 placeholder-zinc-600 outline-none"
+            className="flex-1 bg-transparent py-4 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none"
           />
-          {loading && (
-            <span className="w-4 h-4 border-2 border-zinc-600 border-t-zinc-300 rounded-full animate-spin shrink-0" />
+          {loading ? (
+            <Loader2 className="w-4 h-4 text-muted-foreground animate-spin shrink-0" />
+          ) : (
+            <kbd className="text-xs text-muted-foreground/40 border border-border rounded px-1.5 py-0.5 shrink-0">esc</kbd>
           )}
-          <kbd className="text-xs text-zinc-600 border border-zinc-700 rounded px-1.5 py-0.5 shrink-0">esc</kbd>
         </div>
 
         {/* Results */}
-        <div className="max-h-80 overflow-y-auto py-1">
+        <div className="max-h-72 overflow-y-auto py-1">
           {!loading && allResults.length === 0 && (
-            <div className="px-4 py-10 text-center text-sm text-zinc-600">
+            <div className="px-4 py-10 text-center text-sm text-muted-foreground/40">
               No results for &ldquo;{query}&rdquo;
             </div>
           )}
 
           {filteredProjects.length > 0 && (
             <div>
-              <p className="px-4 pt-3 pb-1 text-[11px] font-semibold text-zinc-600 uppercase tracking-wider">
-                Projects
-              </p>
+              <p className="px-4 pt-3 pb-1 text-[11px] font-semibold text-muted-foreground/50 uppercase tracking-wider">Projects</p>
               {filteredProjects.map((p, i) => {
-                const idx = i;
-                const isSelected = selected === idx;
+                const isSelected = selected === i;
                 return (
-                  <button
-                    key={p.id}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                      isSelected ? "bg-zinc-800" : "hover:bg-zinc-800/50"
-                    }`}
+                  <button key={p.id}
+                    className={cn("w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors",
+                      isSelected ? "bg-accent" : "hover:bg-accent/50"
+                    )}
                     onClick={() => navigate(`/projects/${p.id}`)}
-                    onMouseEnter={() => setSelected(idx)}
+                    onMouseEnter={() => setSelected(i)}
                   >
-                    <span className="w-7 h-7 rounded-lg bg-zinc-700 flex items-center justify-center text-sm font-bold text-zinc-300 shrink-0">
+                    <span className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center text-sm font-bold text-foreground shrink-0">
                       {p.name[0]?.toUpperCase()}
                     </span>
                     <span className="flex-1 min-w-0">
-                      <span className="block text-sm text-zinc-100 font-medium">{p.name}</span>
-                      <span className="block text-xs text-zinc-500 truncate">{p.repoUrl}</span>
+                      <span className="block text-sm text-foreground font-medium">{p.name}</span>
+                      <span className="block text-xs text-muted-foreground/60 truncate">{p.repoUrl}</span>
                     </span>
-                    {isSelected && (
-                      <kbd className="text-[10px] text-zinc-600 border border-zinc-700 rounded px-1.5 py-0.5 shrink-0">↵</kbd>
-                    )}
+                    {isSelected && <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0" />}
                   </button>
                 );
               })}
@@ -194,31 +128,27 @@ export function CommandPalette({ open, onClose }: Props) {
 
           {filteredActions.length > 0 && (
             <div>
-              <p className="px-4 pt-3 pb-1 text-[11px] font-semibold text-zinc-600 uppercase tracking-wider">
-                Navigation
-              </p>
+              <p className="px-4 pt-3 pb-1 text-[11px] font-semibold text-muted-foreground/50 uppercase tracking-wider">Navigation</p>
               {filteredActions.map((a, i) => {
                 const idx = filteredProjects.length + i;
                 const isSelected = selected === idx;
+                const Icon = a.icon;
                 return (
-                  <button
-                    key={a.id}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                      isSelected ? "bg-zinc-800" : "hover:bg-zinc-800/50"
-                    }`}
+                  <button key={a.id}
+                    className={cn("w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors",
+                      isSelected ? "bg-accent" : "hover:bg-accent/50"
+                    )}
                     onClick={() => navigate(a.href)}
                     onMouseEnter={() => setSelected(idx)}
                   >
-                    <span className="w-7 h-7 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center text-sm text-zinc-500 shrink-0">
-                      →
+                    <span className="w-7 h-7 rounded-lg bg-secondary border border-border flex items-center justify-center shrink-0">
+                      <Icon className="w-3.5 h-3.5 text-muted-foreground" />
                     </span>
                     <span className="flex-1">
-                      <span className="block text-sm text-zinc-200">{a.label}</span>
-                      <span className="block text-xs text-zinc-500">{a.description}</span>
+                      <span className="block text-sm text-foreground">{a.label}</span>
+                      <span className="block text-xs text-muted-foreground/60">{a.description}</span>
                     </span>
-                    {isSelected && (
-                      <kbd className="text-[10px] text-zinc-600 border border-zinc-700 rounded px-1.5 py-0.5 shrink-0">↵</kbd>
-                    )}
+                    {isSelected && <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0" />}
                   </button>
                 );
               })}
@@ -226,14 +156,14 @@ export function CommandPalette({ open, onClose }: Props) {
           )}
         </div>
 
-        {/* Footer hints */}
-        <div className="px-4 py-2.5 border-t border-zinc-800 flex items-center gap-4 text-[11px] text-zinc-600">
-          <span><span className="text-zinc-500">↑↓</span> navigate</span>
-          <span><span className="text-zinc-500">↵</span> open</span>
-          <span><span className="text-zinc-500">esc</span> close</span>
+        {/* Footer */}
+        <div className="px-4 py-2.5 border-t border-border flex items-center gap-4 text-[11px] text-muted-foreground/40">
+          <span><span className="text-muted-foreground/60">↑↓</span> navigate</span>
+          <span><span className="text-muted-foreground/60">↵</span> open</span>
+          <span><span className="text-muted-foreground/60">esc</span> close</span>
           <span className="ml-auto">{allResults.length} result{allResults.length !== 1 ? "s" : ""}</span>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
