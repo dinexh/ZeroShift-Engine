@@ -28,7 +28,7 @@ Built for single-server (KVM/VPS) setups where you want Vercel-style deployments
 
 ---
 
-## Quick Start
+## Setup
 
 ### Prerequisites
 
@@ -38,7 +38,7 @@ Built for single-server (KVM/VPS) setups where you want Vercel-style deployments
 - PostgreSQL — local or [Neon](https://neon.tech) free tier
 - PM2 — `npm i -g pm2`
 
-### 1. Clone & install
+### 1. Clone and install
 
 ```bash
 git clone https://github.com/dinexh/VersionGate
@@ -54,11 +54,28 @@ pm2 start ecosystem.config.cjs
 pm2 save
 ```
 
-### 3. Open the setup wizard
+### 3. Complete setup in the UI
 
 Navigate to `http://your-server-ip:9090/setup` in your browser.
 
-Fill in your **domain**, **PostgreSQL connection string**, and optional **Gemini API key** — the wizard writes the config, migrates the database, and configures Nginx automatically. The engine restarts itself and redirects you to the dashboard.
+Enter:
+
+- Your **PostgreSQL connection string**
+- Your **domain or server IP**
+- Optional **Gemini API key**
+
+The setup wizard will then:
+
+- Write the `.env` file
+- Set `PROJECTS_ROOT_PATH`
+- Generate and persist `ENCRYPTION_KEY`
+- Run `bunx prisma generate`
+- Run `bunx prisma db push --accept-data-loss`
+- Write and reload Nginx config when permissions allow
+
+After setup finishes, open the dashboard and start adding projects.
+
+No manual `.env` edits or Prisma commands are required after opening `/setup`.
 
 ---
 
