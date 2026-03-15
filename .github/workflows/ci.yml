@@ -1,5 +1,4 @@
 name: VersionGate CI
-
 on:
   push:
     branches:
